@@ -1,0 +1,18 @@
+# Ordner ignorieren
+__pycache__  
+venv  
+
+# Bestimmte Dateien ignorieren
+.log  
+.tmp  
+.csv  
+.DS_Store  
+
+# Excel-Dateien ignorieren (falls nicht versioniert)
+.xlsx  
+
+# Jupyter Notebook-Checkpoints ignorieren
+.ipynb_checkpoints
+
+# Konfigurationsdateien ignorieren
+config.json  
