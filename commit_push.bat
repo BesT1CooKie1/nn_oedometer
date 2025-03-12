@@ -5,7 +5,7 @@ cls
 
 REM Setze dein Repository-Pfad
 set REPO_PATH="C:\Users\hab185\Desktop\pina_oedometer"
-set BRANCH=main
+set BRANCH=master
 
 REM Gehe in das Repository-Verzeichnis
 cd /d "%REPO_PATH%"
