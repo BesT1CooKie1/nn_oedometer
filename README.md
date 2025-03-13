@@ -47,34 +47,13 @@ Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `
 
 
 ```python
-import ipywidgets as widgets
 from IPython.display import display, Markdown
 
-# Checkbox erstellen
-debug_mode = widgets.Checkbox(
-    value=True,  # Standard: Eingeschaltet
-    description="Debug Mode aktivieren",
-    disabled=False
-)
-
-normalize_data = widgets.Checkbox(
-    value=False,  # Standard: Ausgeschaltet
-    description="Daten normalisieren",
-    disabled=False
-)
-
-# Checkbox anzeigen
-display(debug_mode)
-display(normalize_data)
+# Debugger: Aktiviert
+debug_mode = True
+# Normalisierung der Daten: Deaktiviert
+normalize_data = False
 ```
-
-
-    Checkbox(value=True, description='Debug Mode aktivieren')
-
-
-
-    Checkbox(value=False, description='Daten normalisieren')
-
 
 
 ```python
@@ -491,7 +470,7 @@ trainer.logged_metrics
 
 
 
-    {'data_loss': tensor(0.0466), 'mean_loss': tensor(0.0466)}
+    {'data_loss': tensor(0.0008), 'mean_loss': tensor(0.0008)}
 
 
 
@@ -561,30 +540,35 @@ else:
     Data-Loss bis simga_19
     
          sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
-    0    1.00000         0.20000              0.19889                  0.00111
-    1    1.20000         0.24000              0.23327                  0.00673
-    2    1.44000         0.28800              0.28144                  0.00656
-    3    1.72800         0.34560              0.34100                  0.00460
-    4    2.07360         0.41472              0.41168                  0.00304
-    5    2.48832         0.49766              0.49635                  0.00131
-    6    2.98598         0.59720              0.59596                  0.00124
-    7    3.58318         0.71664              0.71468                  0.00196
-    8    4.29982         0.85996              0.85430                  0.00566
-    9    5.15978         1.03196              1.02953                  0.00243
-    10   6.19174         1.23835              1.25097                 -0.01262
-    11   7.43008         1.48602              1.49066                 -0.00464
-    12   8.91610         1.78322              1.77946                  0.00376
-    13  10.69932         2.13986              2.13063                  0.00923
-    14  12.83918         2.56784              2.55240                  0.01544
-    15  15.40702         3.08140              3.05907                  0.02233
-    16  18.48843         3.69769              3.68927                  0.00842
-    17  22.18611         4.43722              4.45537                 -0.01814
-    18  26.62333         5.32467              5.37468                 -0.05001
-    19  31.94800         6.38960              6.47786                 -0.08827
+    0    1.00000         0.20000              0.19873                  0.00127
+    1    1.20000         0.24000              0.23726                  0.00274
+    2    1.44000         0.28800              0.28636                  0.00164
+    3    1.72800         0.34560              0.34480                  0.00080
+    4    2.07360         0.41472              0.41426                  0.00046
+    5    2.48832         0.49766              0.49746                  0.00020
+    6    2.98598         0.59720              0.59657                  0.00063
+    7    3.58318         0.71664              0.71650                  0.00013
+    8    4.29982         0.85996              0.85959                  0.00037
+    9    5.15978         1.03196              1.03239                 -0.00044
+    10   6.19174         1.23835              1.23777                  0.00058
+    11   7.43008         1.48602              1.48602                 -0.00001
+    12   8.91610         1.78322              1.78378                 -0.00056
+    13  10.69932         2.13986              2.14049                 -0.00062
+    14  12.83918         2.56784              2.56830                 -0.00046
+    15  15.40702         3.08140              3.08123                  0.00018
+    16  18.48843         3.69769              3.69674                  0.00094
+    17  22.18611         4.43722              4.43536                  0.00187
+    18  26.62333         5.32467              5.32217                  0.00250
+    19  31.94800         6.38960              6.38718                  0.00242
     
 
 <img src="./graph/visual_prediction-vs-truesolution.png" alt="Prediction vs True Solution" height="100"><br>
 **Hinweis:** Datenpunkte liegen sehr nahe beieinander. 
+
+
+```python
+## Visualisierung Error-Result
+```
 
 
 ```python
