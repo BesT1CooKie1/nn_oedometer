@@ -55,6 +55,8 @@ debug_mode = True
 normalize_data = False
 ```
 
+## Laden der Daten aus `oedo_trainingsdata.xlsx`
+
 
 ```python
 import pandas as pd
@@ -79,7 +81,7 @@ data_subset = df.iloc[row_start_range:row_end_range, selected_columns]
 # Daten als dict speichern
 data_dict = {col: np.array(data_subset[col]) for col in data_subset.columns}
 
-if debug_mode.value:
+if debug_mode:
     print('‼️Geladene Exceldaten')
     print(data_dict)
 ```
@@ -154,7 +156,7 @@ Die Normalisierung von Daten für neuronale Netze bedeutet, dass Eingabedaten au
 
 
 ```python
-if normalize_data.value:
+if normalize_data:
     data_dict.update({'sigma_0_raw': data_dict.pop('sigma_0')})
     data_dict.update({'sigma_1_raw': data_dict.pop('sigma_1')})
     
@@ -197,7 +199,7 @@ sigma_1_train = LabelTensor(tensor(data_dict['sigma_1'], dtype=torch.float).unsq
 # Kombinieren der Trainingsdaten (Verwendung von 'np.column_stack' für bessere Performance)
 input_points_combined = LabelTensor(torch.tensor(np.column_stack([data_dict['sigma_0'], data_dict['delta_epsilon']]), dtype=torch.float), ['sigma_0', 'delta_epsilon'])
 
-if debug_mode.value:
+if debug_mode:
     print('‼️Data Loaded')
     print(f' sigma_0: {sigma_0_train.size()}')
     print(f' delta_epsilon: {delta_epsilon_train.shape}')
@@ -259,7 +261,7 @@ problem = SimpleODE()
 # Datengenerierung, falls Randbedingungen definiert
 # problem.discretise_domain(n=993, mode='random', variables='all', locations='all') # Notwendig, wenn "input_pts" und "output_pts" nicht vorgegeben sind
 
-if debug_mode.value:
+if debug_mode:
     # Debugging-Ausgaben
     print("‼️Geladene Input Variablen: ", problem.input_variables)
     print("‼️Geladene Output Variablen: ", problem.output_variables)
@@ -405,7 +407,7 @@ from pina.callbacks import MetricTracker
 import torch
 from pytorch_lightning.loggers import TensorBoardLogger  # Import TensorBoard Logger
 
-if debug_mode.value:
+if debug_mode:
     print('Debugging Info:')
     # Überprüfen der Größe der Eingabepunkte und Ausgabepunkte
     print("‼️Länge der Eingabepunkte (input_pts):", len(problem.input_pts['data']))
@@ -422,7 +424,7 @@ model = FeedForward(
 # PINN-Objekt erstellen
 pinn = PINN(problem, model)
 
-# TensorBoard-Logger einrichten
+# TensorBoard-Logger
 logger = TensorBoardLogger("tensorboard_logs", name="pina_experiment")
 
 # Trainer erstellen mit TensorBoard-Logger
@@ -445,14 +447,16 @@ print('\nFinale Loss Werte')
 trainer.logged_metrics
 ```
 
+    GPU available: False, used: False
+    TPU available: False, using: 0 TPU cores
+    HPU available: False, using: 0 HPUs
+    
+
     Debugging Info:
     ‼️Länge der Eingabepunkte (input_pts): 94
     ‼️Länge der Ausgabepunkte (output_pts): 94
     
 
-    GPU available: False, used: False
-    TPU available: False, using: 0 TPU cores
-    HPU available: False, using: 0 HPUs
     C:\Users\hab185\Documents\00_Tim\01_Implementierung\pina_oedometer\venv\Lib\site-packages\pytorch_lightning\loops\fit_loop.py:310: The number of training batches (10) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
     
 
@@ -470,7 +474,7 @@ trainer.logged_metrics
 
 
 
-    {'data_loss': tensor(0.0008), 'mean_loss': tensor(0.0008)}
+    {'data_loss': tensor(0.0122), 'mean_loss': tensor(0.0122)}
 
 
 
@@ -535,35 +539,38 @@ if 'data_dict' in globals() and 'sigma_1_pred' in globals():
     print(data_loss_table)
 else:
     print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
+
+display(Markdown('![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.'))
 ```
 
     Data-Loss bis simga_19
     
          sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
-    0    1.00000         0.20000              0.19873                  0.00127
-    1    1.20000         0.24000              0.23726                  0.00274
-    2    1.44000         0.28800              0.28636                  0.00164
-    3    1.72800         0.34560              0.34480                  0.00080
-    4    2.07360         0.41472              0.41426                  0.00046
-    5    2.48832         0.49766              0.49746                  0.00020
-    6    2.98598         0.59720              0.59657                  0.00063
-    7    3.58318         0.71664              0.71650                  0.00013
-    8    4.29982         0.85996              0.85959                  0.00037
-    9    5.15978         1.03196              1.03239                 -0.00044
-    10   6.19174         1.23835              1.23777                  0.00058
-    11   7.43008         1.48602              1.48602                 -0.00001
-    12   8.91610         1.78322              1.78378                 -0.00056
-    13  10.69932         2.13986              2.14049                 -0.00062
-    14  12.83918         2.56784              2.56830                 -0.00046
-    15  15.40702         3.08140              3.08123                  0.00018
-    16  18.48843         3.69769              3.69674                  0.00094
-    17  22.18611         4.43722              4.43536                  0.00187
-    18  26.62333         5.32467              5.32217                  0.00250
-    19  31.94800         6.38960              6.38718                  0.00242
+    0    1.00000         0.20000              0.20419                 -0.00419
+    1    1.20000         0.24000              0.23889                  0.00111
+    2    1.44000         0.28800              0.28515                  0.00285
+    3    1.72800         0.34560              0.34548                  0.00012
+    4    2.07360         0.41472              0.41705                 -0.00233
+    5    2.48832         0.49766              0.49664                  0.00103
+    6    2.98598         0.59720              0.59513                  0.00206
+    7    3.58318         0.71664              0.71509                  0.00154
+    8    4.29982         0.85996              0.86259                 -0.00263
+    9    5.15978         1.03196              1.03463                 -0.00268
+    10   6.19174         1.23835              1.23958                 -0.00124
+    11   7.43008         1.48602              1.48540                  0.00061
+    12   8.91610         1.78322              1.78039                  0.00283
+    13  10.69932         2.13986              2.13488                  0.00498
+    14  12.83918         2.56784              2.56115                  0.00668
+    15  15.40702         3.08140              3.07271                  0.00869
+    16  18.48843         3.69769              3.68785                  0.00983
+    17  22.18611         4.43722              4.43908                 -0.00186
+    18  26.62333         5.32467              5.34056                 -0.01589
+    19  31.94800         6.38960              6.42114                 -0.03154
     
 
-<img src="./graph/visual_prediction-vs-truesolution.png" alt="Prediction vs True Solution" height="100"><br>
-**Hinweis:** Datenpunkte liegen sehr nahe beieinander. 
+
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+
 
 
 ```python
