@@ -379,7 +379,7 @@ pl.plot_samples(problem=problem, variables=['delta_epsilon','sigma_0'])
 
 
     
-![png](output_10_0.png)
+![png](./graph/output_10_0.png)
     
 
 
@@ -487,7 +487,7 @@ plt.show()
 
 
     
-![png](output_12_0.png)
+![png](./graph/output_12_0.png)
     
 
 
@@ -498,7 +498,7 @@ pl.plot(solver=pinn)
 
 
     
-![png](output_13_0.png)
+![png](./graph/output_13_0.png)
     
 
 
@@ -513,7 +513,7 @@ pl.plot_loss(trainer, label='mean_loss', logy=True)
 
 
     
-![png](output_15_0.png)
+![png](./graph/output_15_0.png)
     
 
 
