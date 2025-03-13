@@ -38,13 +38,17 @@ $$
 <br> 
 
 Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ ; $\Delta\epsilon$ }, `Output` { $\sigma_{t+1}$ }.
-
-## Einstellungen
+<br>
+### Variablendeklaration
+- $\sigma_t$ = `sigma_0`
+- $\Delta\epsilon$ = `delta_epsilon`
+- $\sigma_{t+1}$ = `sigma_1`
+## Einstellungen und Utilities
 
 
 ```python
 import ipywidgets as widgets
-from IPython.display import display
+from IPython.display import display, Markdown
 
 # Checkbox erstellen
 debug_mode = widgets.Checkbox(
@@ -62,7 +66,6 @@ normalize_data = widgets.Checkbox(
 # Checkbox anzeigen
 display(debug_mode)
 display(normalize_data)
-
 ```
 
 
@@ -221,7 +224,6 @@ if debug_mode.value:
     print(f' delta_epsilon: {delta_epsilon_train.shape}')
     print(f' sigma_0 und delta_epsilon combined: {input_points_combined.size()}')
     print(f' sigma_1: {sigma_1_train.shape}')
-
 ```
 
     ‼️Data Loaded
@@ -239,7 +241,7 @@ Dieser Code definiert ein **Physics-Informed Neural Network (PINN)**-Problem mit
 - **Definitionsbereich (`domain`)**: Der Wertebereich der Eingabevariablen (`sigma_0`, `delta_epsilon`) wird als `CartesianDomain` festgelegt.
     - **Hinweis:** `domain` muss immer definiert sein, selbst wenn sie nicht direkt zur Datengenerierung verwendet wird.  
     - [PINA-Dokumentation - CartesianDomain](https://mathlab.github.io/PINA/_rst/geometry/cartesian.html) 
-- **Randbedingungen (`conditions`)**: Die echten Messwerte (`sigma_1_train`) werden als Randbedingung (`Condition`) für das Modell definiert.
+- **Randbedingungen (`conditions`)**: Die echten Messwerte (`in sigma_0, delta_epsilon` `out sigma_1_train`) werden als Randbedingung (`Condition`) für das Modell definiert.
     - [PINA-Dokumentation - Condition](https://mathlab.github.io/PINA/_rst/condition.html) 
 - **"Wahre Lösung" (`truth_solution`)**: Falls erforderlich, kann eine analytische Lösung (hier `torch.exp(...)`) zur Validierung genutzt werden.
     - **Hinweis:** Funktioniert in unserem Fall nicht, da die Implementierung nicht für reine Input und Outpunkt Punkte implementiert ist.
@@ -392,9 +394,28 @@ from pina import Plotter
 
 pl = Plotter()
 pl.plot_samples(problem=problem, filename='./graph/visual_sampling.png', variables=['delta_epsilon','sigma_0'])
+display(Markdown('![Result of sampling](./graph/visual_sampling.png)'))
 ```
 
+
 ![Result of sampling](./graph/visual_sampling.png)
+
+
+## **Training eines Physics-Informed Neural Networks (PINN) mit PINA**
+
+Dieser Code definiert und trainiert ein **Physics-Informed Neural Network (PINN)** zur Lösung des Problems in PINA.
+
+- **Modell (`FeedForward`)**: Ein neuronales Netz mit drei versteckten Schichten (`[50, 50, 50]`), das mit der ReLU-Aktivierungsfunktion arbeitet.
+- **PINN-Objekt (`PINN`)**: Erstellt das PINN-Modell, das die physikalischen Randbedingungen des Problems berücksichtigt.
+- **TensorBoard-Logger (`TensorBoardLogger`)**: Speichert Trainingsmetriken zur Visualisierung.
+- **Trainer (`Trainer`)**: Führt das Training für 1500 Epochen mit Batch-Größe 10 durch.
+- **Training starten (`trainer.train()`)**: Startet den Optimierungsprozess und protokolliert die Metriken.
+
+Am Ende wird die **finale Loss-Funktion** ausgegeben, um die Trainingsqualität zu bewerten.
+
+**Mehr zu `Trainer`:**  
+[PINA-Dokumentation – Trainer](https://mathlab.github.io/PINA/_rst/trainer.html)
+
 
 
 ```python
@@ -406,6 +427,7 @@ import torch
 from pytorch_lightning.loggers import TensorBoardLogger  # Import TensorBoard Logger
 
 if debug_mode.value:
+    print('Debugging Info:')
     # Überprüfen der Größe der Eingabepunkte und Ausgabepunkte
     print("‼️Länge der Eingabepunkte (input_pts):", len(problem.input_pts['data']))
     print("‼️Länge der Ausgabepunkte (output_pts):", len(problem.output_pts))
@@ -427,7 +449,7 @@ logger = TensorBoardLogger("tensorboard_logs", name="pina_experiment")
 # Trainer erstellen mit TensorBoard-Logger
 trainer = Trainer(
     solver=pinn,
-    max_epochs=1500,
+    max_epochs=1000,
     callbacks=[MetricTracker()],
     batch_size=10,
     accelerator='cpu',
@@ -439,20 +461,19 @@ trainer = Trainer(
 # Training starten
 trainer.train()
 
+print('\nFinale Loss Werte')
 # Inspect final loss
 trainer.logged_metrics
-
 ```
 
-    GPU available: False, used: False
-    TPU available: False, using: 0 TPU cores
-    HPU available: False, using: 0 HPUs
-    
-
+    Debugging Info:
     ‼️Länge der Eingabepunkte (input_pts): 94
     ‼️Länge der Ausgabepunkte (output_pts): 94
     
 
+    GPU available: False, used: False
+    TPU available: False, using: 0 TPU cores
+    HPU available: False, using: 0 HPUs
     C:\Users\hab185\Documents\00_Tim\01_Implementierung\pina_oedometer\venv\Lib\site-packages\pytorch_lightning\loops\fit_loop.py:310: The number of training batches (10) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
     
 
@@ -460,22 +481,41 @@ trainer.logged_metrics
     Training: |                                                                    | 0/? [00:00<?, ?it/s]
 
 
-    `Trainer.fit` stopped: `max_epochs=1500` reached.
+    `Trainer.fit` stopped: `max_epochs=1000` reached.
+    
+
+    
+    Finale Loss Werte
     
 
 
 
 
-    {'data_loss': tensor(0.0019), 'mean_loss': tensor(0.0019)}
+    {'data_loss': tensor(0.0466), 'mean_loss': tensor(0.0466)}
 
 
+
+## **Visualisierung der Modellvorhersage für sigma_1**
+
+Dieser Code erstellt einen **Plot der wahren Werte (`sigma_1`)** im Vergleich zur **Vorhersage des neuronalen Netzwerks**.
+
+- **Datenvorbereitung (`input_data`)**: Die Eingabedaten (`sigma_0` und `delta_epsilon`) werden als `LabelTensor` für das trainierte Modell erstellt.
+- **Modellvorhersage (`pinn(input_data)`)**: Das trainierte PINN-Modell gibt eine Prognose für `sigma_1` aus.
+- **Plot-Erstellung mit `matplotlib`**:  
+  - Die wahre Lösung (`sigma_1`) wird als **blaue gestrichelte Linie** dargestellt.  
+  - Die Vorhersage des neuronalen Netzwerks wird als **rote durchgezogene Linie** geplottet.  
+
+**Zusätzlicher Schritt:**  
+Die Nutzung von `matplotlib` war notwendig, da die interne Plot-Funktion von PINA `pl.plot()` das Diagramm nicht wie in den Tutorials erwartungsgemäß generierte, selbst wenn `delta_epsilon` auf einen fixen Wert gesetzt wurde. Dies könnte auf eine fehlerhafte Nutzung der Funktion oder auf eine Inkompatibilität in der Darstellung zurückzuführen sein.
 
 
 ```python
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg') # Keine doppelte Darstellung des Plottes
 import matplotlib.pyplot as plt
 import torch
+
+max_i = 20
 
 # Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
 input_data = LabelTensor(torch.tensor(
@@ -486,28 +526,75 @@ input_data = LabelTensor(torch.tensor(
 sigma_1_pred = pinn(input_data).detach().numpy()
 
 # Plot der wahren vs. vorhergesagten Werte
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(10, 5))
 
-plt.plot(data_dict['sigma_0'], data_dict['sigma_1'], label="True Solution (sigma_1)", linestyle='dashed', color='blue')
-plt.plot(data_dict['sigma_0'], sigma_1_pred, label="NN Prediction (sigma_1)", linestyle='solid', color='red')
+plt.plot(data_dict['sigma_0'][0:max_i], data_dict['sigma_1'][0:max_i], label="True Solution (sigma_1)", linestyle='dashed', color='blue')
+plt.plot(data_dict['sigma_0'][0:max_i], sigma_1_pred[0:max_i], label="NN Prediction (sigma_1)", linestyle='solid', color='red')
 
 plt.xlabel("sigma_0")
 plt.ylabel("sigma_1")
-plt.title("Prediction vs. True Solution (delta_epsilon=0.0005)")
+plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
 plt.legend()
 plt.grid()
 plt.savefig('./graph/visual_prediction-vs-truesolution.png',)
 
+# Überprüfen, ob die notwendigen Variablen existieren
+if 'data_dict' in globals() and 'sigma_1_pred' in globals():
+    # Erstelle eine Tabelle für die übersichtliche Darstellung
+    data_loss_table = pd.DataFrame({
+        "sigma_t": np.round(data_dict["sigma_0"][0:max_i], 5),
+        "True sigma_t+1": np.round(data_dict["sigma_1"][0:max_i], 5),
+        "Predicted sigma_t+1": np.round(sigma_1_pred[0:max_i].flatten(), 5),
+        "Loss (True - Predicted)": np.round(data_dict["sigma_1"][0:max_i] - sigma_1_pred[0:max_i].flatten(), 5)
+    })
+
+    pd.set_option('display.max_rows', None)  # Keine Begrenzung der Zeilen
+    pd.set_option('display.max_columns', None)  # Keine Begrenzung der Spalten
+    pd.set_option('display.width', 1000)  # Breite für bessere Lesbarkeit
+
+    print(f'Data-Loss bis simga_{str(max_i-1)}\n')
+    print(data_loss_table)
+else:
+    print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
 ```
 
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)
+    Data-Loss bis simga_19
+    
+         sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
+    0    1.00000         0.20000              0.19889                  0.00111
+    1    1.20000         0.24000              0.23327                  0.00673
+    2    1.44000         0.28800              0.28144                  0.00656
+    3    1.72800         0.34560              0.34100                  0.00460
+    4    2.07360         0.41472              0.41168                  0.00304
+    5    2.48832         0.49766              0.49635                  0.00131
+    6    2.98598         0.59720              0.59596                  0.00124
+    7    3.58318         0.71664              0.71468                  0.00196
+    8    4.29982         0.85996              0.85430                  0.00566
+    9    5.15978         1.03196              1.02953                  0.00243
+    10   6.19174         1.23835              1.25097                 -0.01262
+    11   7.43008         1.48602              1.49066                 -0.00464
+    12   8.91610         1.78322              1.77946                  0.00376
+    13  10.69932         2.13986              2.13063                  0.00923
+    14  12.83918         2.56784              2.55240                  0.01544
+    15  15.40702         3.08140              3.05907                  0.02233
+    16  18.48843         3.69769              3.68927                  0.00842
+    17  22.18611         4.43722              4.45537                 -0.01814
+    18  26.62333         5.32467              5.37468                 -0.05001
+    19  31.94800         6.38960              6.47786                 -0.08827
+    
+
+<img src="./graph/visual_prediction-vs-truesolution.png" alt="Prediction vs True Solution" height="100"><br>
+**Hinweis:** Datenpunkte liegen sehr nahe beieinander. 
 
 
 ```python
 pl.plot(solver=pinn, filename='./graph/visual_nn-result-error.png')
+display(Markdown('![NN Error result](./graph/visual_nn-result-error.png)'))
 ```
 
+
 ![NN Error result](./graph/visual_nn-result-error.png)
+
 
 ## Visualisierung Loss-Kurve
 
@@ -516,6 +603,9 @@ pl.plot(solver=pinn, filename='./graph/visual_nn-result-error.png')
 ```python
 # plotting the solution
 pl.plot_loss(trainer, label='mean_loss', logy=True, filename='./graph/visual_loss.png')
+display(Markdown('![Loss Kurve](./graph/visual_loss.png)'))
 ```
 
+
 ![Loss Kurve](./graph/visual_loss.png)
+
