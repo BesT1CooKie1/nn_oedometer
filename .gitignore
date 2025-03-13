@@ -6,7 +6,8 @@ venv
 .log  
 .tmp  
 .csv  
-.DS_Store  
+.DS_Store
+.bat 
 
 # Excel-Dateien ignorieren (falls nicht versioniert)
 .xlsx  

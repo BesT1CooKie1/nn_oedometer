@@ -32,7 +32,7 @@ $$
 $$
 
 <div = style="text-align: center;">
-    <img alt="Problem Oedometer Preview" src="./files/oedometer/problem_preview.png" width="50%" height=auto>
+    <img alt="Problem Oedometer Preview" src="./graph/problem_preview.png" width="50%" height=auto>
 </div>
 
 <br> 
@@ -48,7 +48,7 @@ from IPython.display import display
 
 # Checkbox erstellen
 debug_mode = widgets.Checkbox(
-    value=True,  # Standard: Ausgeschaltet
+    value=True,  # Standard: Eingeschaltet
     description="Debug Mode aktivieren",
     disabled=False
 )
@@ -79,11 +79,9 @@ import pandas as pd
 import numpy as np
 from sympy.integrals.heurisch import components
 
-# Excel-Datei laden (ersetze 'datei.xlsx' mit deinem Dateinamen)
 file_path = "files/oedometer/oedo_trainingsdata.xlsx"
 sheet_name = "Res"
 
-# Excel-Datei mit explizitem Tabellenblatt laden
 df = pd.read_excel(file_path, sheet_name=sheet_name)
 
 # Dynamische Ermittlung der letzten Zeile mit Daten
@@ -96,6 +94,7 @@ selected_columns = [1, 3, 5]  # Spalten-Indices
 # Daten extrahieren
 data_subset = df.iloc[row_start_range:row_end_range, selected_columns]
 
+# Daten als dict speichern
 data_dict = {col: np.array(data_subset[col]) for col in data_subset.columns}
 
 if debug_mode.value:
@@ -191,7 +190,16 @@ else:
     ‼️ Es wurde keine Normalisierung der Werte vorgenommen.
     
 
-## Konvertierung zu LabelTensor
+## **Datenvorbereitung für PINA mit LabelTensor**
+In diesem Code werden die Eingabedaten aus `data_dict` als **LabelTensor** gespeichert, um sie strukturiert und mit benannten Dimensionen für das neuronale Netz in PINA bereitzustellen.  
+
+- `sigma_0_train`, `delta_epsilon_train` und `sigma_1_train` werden als **einzelne beschriftete Tensoren** erstellt.  
+- `input_points_combined` kombiniert `sigma_0` und `delta_epsilon` in einem **2D-Tensor** für das Training.  
+- `LabelTensor` erleichtert die Nutzung der Daten in PINA, indem es Variablen klar zuordnet und mit physischen Größen verknüpft.
+
+**Mehr zu `LabelTensor`:**  
+[PINA Documentation – LabelTensor](https://mathlab.github.io/PINA/_rst/label_tensor.html)
+
 
 
 ```python
@@ -204,7 +212,7 @@ sigma_0_train = LabelTensor(tensor(data_dict['sigma_0'], dtype=torch.float).unsq
 delta_epsilon_train = LabelTensor(tensor(data_dict['delta_epsilon'], dtype=torch.float).unsqueeze(-1), ['delta_epsilon'])
 sigma_1_train = LabelTensor(tensor(data_dict['sigma_1'], dtype=torch.float).unsqueeze(-1), ['sigma_1'])
 
-# Kombinieren der Trainingsdaten
+# Kombinieren der Trainingsdaten (Verwendung von 'np.column_stack' für bessere Performance)
 input_points_combined = LabelTensor(torch.tensor(np.column_stack([data_dict['sigma_0'], data_dict['delta_epsilon']]), dtype=torch.float), ['sigma_0', 'delta_epsilon'])
 
 if debug_mode.value:
@@ -223,12 +231,21 @@ if debug_mode.value:
      sigma_1: torch.Size([94, 1])
     
 
-## Problemdefinition
+### **Definition eines einfachen PINN-Problems in PINA**  
+Dieser Code definiert ein **Physics-Informed Neural Network (PINN)**-Problem mithilfe der PINA-Bibliothek.  
+ 
+- **Klassenstruktur (`SimpleODE`)**: Erbt von `AbstractProblem` und spezifiziert die Eingabe- und Ausgabevariablen basierend auf `LabelTensor`.
+    - [PINA-Dokumentation - AbstractProblem](https://mathlab.github.io/PINA/_rst/problem/abstractproblem.html) 
+- **Definitionsbereich (`domain`)**: Der Wertebereich der Eingabevariablen (`sigma_0`, `delta_epsilon`) wird als `CartesianDomain` festgelegt.
+    - **Hinweis:** `domain` muss immer definiert sein, selbst wenn sie nicht direkt zur Datengenerierung verwendet wird.  
+    - [PINA-Dokumentation - CartesianDomain](https://mathlab.github.io/PINA/_rst/geometry/cartesian.html) 
+- **Randbedingungen (`conditions`)**: Die echten Messwerte (`sigma_1_train`) werden als Randbedingung (`Condition`) für das Modell definiert.
+    - [PINA-Dokumentation - Condition](https://mathlab.github.io/PINA/_rst/condition.html) 
+- **"Wahre Lösung" (`truth_solution`)**: Falls erforderlich, kann eine analytische Lösung (hier `torch.exp(...)`) zur Validierung genutzt werden.
+    - **Hinweis:** Funktioniert in unserem Fall nicht, da die Implementierung nicht für reine Input und Outpunkt Punkte implementiert ist.
+    - [PINA-Tutorial - Physics Informed Neural Networks on PINA](https://mathlab.github.io/PINA/_rst/tutorials/tutorial1/tutorial.html) 
+- **Probleminstanz (`problem = SimpleODE()`)**: Erstellt das Problem, das für das Training eines PINN verwendet wird.  
 
-### Hinweise
-- Input und Output Werte müssen aus der Excel als Condition übergeben werden.
-- Auch wenn die `domain` nicht verwendet wird, muss diese definiert sein und darf nicht leer sein! Generell ist dieses Attribut notwendig um den Wertebereich für die Datengenerierung zu bestimmen.
-  - Siehe Kommentar `problem.discretise_domain`. 
 
 
 ```python
@@ -244,7 +261,7 @@ class SimpleODE(AbstractProblem):
     # Wertebereich
     domain = CartesianDomain({'sigma_0': [0, 1], 'delta_epsilon': [0, 1]})  # Wertebereich immer definieren!
 
-    # Definition der Randbedingungen und vorberechnetet Punkte
+    # Definition der Randbedingungen und (hier: nur) vorberechnetet Punkte
     conditions = {
         'data': Condition(input_points=input_points_combined, output_points=sigma_1_train),
     }
@@ -374,14 +391,10 @@ Darstellung Input: `sigma_0` und `delta_epsilon`
 from pina import Plotter
 
 pl = Plotter()
-pl.plot_samples(problem=problem, variables=['delta_epsilon','sigma_0'])
+pl.plot_samples(problem=problem, filename='./graph/visual_sampling.png', variables=['delta_epsilon','sigma_0'])
 ```
 
-
-    
-![png](./graph/output_10_0.png)
-    
-
+![Result of sampling](./graph/visual_sampling.png)
 
 
 ```python
@@ -459,6 +472,8 @@ trainer.logged_metrics
 
 
 ```python
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch
 
@@ -481,26 +496,18 @@ plt.ylabel("sigma_1")
 plt.title("Prediction vs. True Solution (delta_epsilon=0.0005)")
 plt.legend()
 plt.grid()
-plt.show()
+plt.savefig('./graph/visual_prediction-vs-truesolution.png',)
 
 ```
 
-
-    
-![png](./graph/output_12_0.png)
-    
-
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)
 
 
 ```python
-pl.plot(solver=pinn)
+pl.plot(solver=pinn, filename='./graph/visual_nn-result-error.png')
 ```
 
-
-    
-![png](./graph/output_13_0.png)
-    
-
+![NN Error result](./graph/visual_nn-result-error.png)
 
 ## Visualisierung Loss-Kurve
 
@@ -508,16 +515,7 @@ pl.plot(solver=pinn)
 
 ```python
 # plotting the solution
-pl.plot_loss(trainer, label='mean_loss', logy=True)
+pl.plot_loss(trainer, label='mean_loss', logy=True, filename='./graph/visual_loss.png')
 ```
 
-
-    
-![png](./graph/output_15_0.png)
-    
-
-
-
-```python
-
-```
+![Loss Kurve](./graph/visual_loss.png)
