@@ -37,7 +37,7 @@ $$
 
 <br> 
 
-Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` {$\sigma_t$, $\Delta\epsilon$}; `Output` {$\sigma_{t+1}$}.
+Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ , $\Delta\epsilon$ }; `Output` { $\sigma_{t+1}$ }.
 
 ## Einstellungen
 
@@ -379,7 +379,7 @@ pl.plot_samples(problem=problem, variables=['delta_epsilon','sigma_0'])
 
 
     
-![png](./graph/output_10_0.png)
+![png](output_10_0.png)
     
 
 
@@ -487,7 +487,7 @@ plt.show()
 
 
     
-![png](./graph/output_12_0.png)
+![png](output_12_0.png)
     
 
 
@@ -498,7 +498,7 @@ pl.plot(solver=pinn)
 
 
     
-![png](./graph/output_13_0.png)
+![png](output_13_0.png)
     
 
 
@@ -513,7 +513,7 @@ pl.plot_loss(trainer, label='mean_loss', logy=True)
 
 
     
-![png](./graph/output_15_0.png)
+![png](output_15_0.png)
     
 
 
