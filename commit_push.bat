@@ -13,6 +13,15 @@ cd /d "%REPO_PATH%"
 REM Git-Credentials speichern (Falls noch nicht gesetzt)
 git config --global credential.helper store
 
+REM Erstelle eine neue requirements.txt Datei
+if exist venv\Scripts\activate (
+    call venv\Scripts\activate
+    pip freeze > requirements.txt
+    echo ✅ Neue requirements.txt erstellt.
+) else (
+    echo [WARNUNG] Virtuelle Umgebung nicht gefunden. requirements.txt wird nicht aktualisiert.
+)
+
 REM Änderungen zum Commit hinzufügen
 git add .
 
