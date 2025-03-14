@@ -65,25 +65,28 @@ from sympy.integrals.heurisch import components
 
 file_path = "files/oedometer/oedo_trainingsdata.xlsx"
 sheet_name = "Res"
+selected_columns = [1, 3, 5] # Spaltenauswahl Spalte B, D und E
+row_start_range = 0
 
-df = pd.read_excel(file_path, sheet_name=sheet_name)
+def extract_excel(file_path, sheet_name, selected_columns, row_start_range):
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    
+    # Dynamische Ermittlung der letzten Zeile mit Daten
+    row_start_range = 0  # Startet bei Zeile 6 (0-basiert)
+    row_end_range = df.dropna(how="all").last_valid_index() + 1  # Letzte Zeile mit Daten
+        
+    # Daten extrahieren
+    data_subset = df.iloc[row_start_range:row_end_range, selected_columns]
+    data_dict = {col: np.array(data_subset[col]) for col in data_subset.columns}
+    
+    if debug_mode:
+        print('‼️Geladene Exceldaten')
+        print(data_dict)
+    
+    # Daten als dict speichern
+    return data_dict
 
-# Dynamische Ermittlung der letzten Zeile mit Daten
-row_start_range = 0  # Startet bei Zeile 6 (0-basiert)
-row_end_range = df.dropna(how="all").last_valid_index() + 1  # Letzte Zeile mit Daten
-
-# Spaltenauswahl Spalte B, D und E
-selected_columns = [1, 3, 5]  # Spalten-Indices
-
-# Daten extrahieren
-data_subset = df.iloc[row_start_range:row_end_range, selected_columns]
-
-# Daten als dict speichern
-data_dict = {col: np.array(data_subset[col]) for col in data_subset.columns}
-
-if debug_mode:
-    print('‼️Geladene Exceldaten')
-    print(data_dict)
+data_dict = extract_excel(file_path, sheet_name, selected_columns, row_start_range)
 ```
 
     ‼️Geladene Exceldaten
@@ -324,14 +327,16 @@ print('\nFinale Loss Werte')
 trainer.logged_metrics
 ```
 
+    GPU available: False, used: False
+    TPU available: False, using: 0 TPU cores
+    HPU available: False, using: 0 HPUs
+    
+
     Debugging Info:
     ‼️Länge der Eingabepunkte (input_pts): 20
     ‼️Länge der Ausgabepunkte (output_pts): 20
     
 
-    GPU available: False, used: False
-    TPU available: False, using: 0 TPU cores
-    HPU available: False, using: 0 HPUs
     C:\Users\hab185\Documents\00_Tim\01_Implementierung\pina_oedometer\venv\Lib\site-packages\pytorch_lightning\loops\fit_loop.py:310: The number of training batches (2) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
     
 
@@ -349,7 +354,7 @@ trainer.logged_metrics
 
 
 
-    {'data_loss': tensor(2.5191e-07), 'mean_loss': tensor(2.5191e-07)}
+    {'data_loss': tensor(5.7616e-07), 'mean_loss': tensor(5.7616e-07)}
 
 
 
@@ -421,26 +426,26 @@ display(Markdown('![Prediction vs True Solution](./graph/visual_prediction-vs-tr
     Data-Loss bis simga_19
     
          sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
-    0    1.00000         0.20000              0.20074                 -0.00074
-    1    1.20000         0.24000              0.23925                  0.00075
-    2    1.44000         0.28800              0.28735                  0.00065
-    3    1.72800         0.34560              0.34623                 -0.00063
-    4    2.07360         0.41472              0.41529                 -0.00057
-    5    2.48832         0.49766              0.49728                  0.00038
-    6    2.98598         0.59720              0.59662                  0.00058
-    7    3.58318         0.71664              0.71690                 -0.00027
-    8    4.29982         0.85996              0.86075                 -0.00078
-    9    5.15978         1.03196              1.03216                 -0.00021
-    10   6.19174         1.23835              1.23792                  0.00043
-    11   7.43008         1.48602              1.48561                  0.00040
-    12   8.91610         1.78322              1.78302                  0.00020
-    13  10.69932         2.13986              2.13990                 -0.00004
-    14  12.83918         2.56784              2.56816                 -0.00032
-    15  15.40702         3.08140              3.08161                 -0.00020
-    16  18.48843         3.69769              3.69764                  0.00004
-    17  22.18611         4.43722              4.43689                  0.00033
-    18  26.62333         5.32467              5.32402                  0.00065
-    19  31.94800         6.38960              6.39031                 -0.00071
+    0    1.00000         0.20000              0.20023                 -0.00023
+    1    1.20000         0.24000              0.23986                  0.00014
+    2    1.44000         0.28800              0.28768                  0.00032
+    3    1.72800         0.34560              0.34581                 -0.00021
+    4    2.07360         0.41472              0.41472                 -0.00000
+    5    2.48832         0.49766              0.49814                 -0.00048
+    6    2.98598         0.59720              0.59679                  0.00041
+    7    3.58318         0.71664              0.71615                  0.00048
+    8    4.29982         0.85996              0.85938                  0.00059
+    9    5.15978         1.03196              1.03295                 -0.00099
+    10   6.19174         1.23835              1.23977                 -0.00142
+    11   7.43008         1.48602              1.48690                 -0.00089
+    12   8.91610         1.78322              1.78347                 -0.00025
+    13  10.69932         2.13986              2.13934                  0.00052
+    14  12.83918         2.56784              2.56639                  0.00144
+    15  15.40702         3.08140              3.08001                  0.00140
+    16  18.48843         3.69769              3.69703                  0.00066
+    17  22.18611         4.43722              4.43745                 -0.00023
+    18  26.62333         5.32467              5.32596                 -0.00130
+    19  31.94800         6.38960              6.38960                  0.00000
     
 
 
@@ -472,3 +477,98 @@ display(Markdown('![Loss Kurve](./graph/visual_loss.png)'))
 
 ![Loss Kurve](./graph/visual_loss.png)
 
+
+# Fazit
+
+Das Problem dieser Implementation ist, dass wir das Modell mit 20 Inpt Parametern gefüttert haben, die daraufhin auch immer erneut gefordert werden. Es ist also nicht möglich einen einzelnen Wert zu bestimmen, da das Modell nun weitere 19 Parameter braucht, um weitere Ausgaben zu generieren. <br>
+
+Im folgenden wird dargestellt, wie es aussehen würde, wenn man bspw. das Modell mit einem Tensor füttert, der nur den ersten Wert mit einem Wert gefüllt hat (Rest 0).
+
+
+```python
+new_data = extract_excel(file_path="files/oedometer/oedo_trainingsdata_compare.xlsx", sheet_name="Res", selected_columns=[1, 3, 5], row_start_range=0)
+
+# Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
+input_data = LabelTensor(torch.tensor(
+    np.column_stack((new_data['sigma_0'], new_data['delta_epsilon'])), dtype=torch.float
+), ['sigma_0', 'delta_epsilon'])
+
+# Model-Vorhersage für sigma_1 berechnen
+sigma_1_pred = pinn(input_data).detach().numpy()
+
+# Plot der wahren vs. vorhergesagten Werte
+plt.figure(figsize=(10, 5))
+
+# True Solution als Punkte darstellen
+plt.scatter(new_data['sigma_0'][0:max_i], new_data['sigma_1'][0:max_i], label="True Solution (sigma_1)", color='blue', marker='o')
+# NN Prediction als Linie darstellen
+plt.scatter(new_data['sigma_0'][0:max_i], sigma_1_pred[0:max_i], label="NN Prediction (sigma_1)", linestyle='solid', color='red')
+
+plt.xlabel("sigma_0")
+plt.ylabel("sigma_1")
+plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
+plt.legend()
+plt.grid()
+plt.savefig('./graph/visual_prediction-vs-truesolution_comp.png')
+
+# Überprüfen, ob die notwendigen Variablen existieren
+if 'data_dict' in globals() and 'sigma_1_pred' in globals():
+    # Erstelle eine Tabelle für die übersichtliche Darstellung
+    data_loss_table = pd.DataFrame({
+        "sigma_t": np.round(new_data["sigma_0"][0:max_i], 5),
+        "True sigma_t+1": np.round(new_data["sigma_1"][0:max_i], 5),
+        "Predicted sigma_t+1": np.round(sigma_1_pred[0:max_i].flatten(), 5),
+        "Loss (True - Predicted)": np.round(new_data["sigma_1"][0:max_i] - sigma_1_pred[0:max_i].flatten(), 5)
+    })
+
+    pd.set_option('display.max_rows', None)  # Keine Begrenzung der Zeilen
+    pd.set_option('display.max_columns', None)  # Keine Begrenzung der Spalten
+    pd.set_option('display.width', 1000)  # Breite für bessere Lesbarkeit
+
+    print(f'Data-Loss bis sigma_{str(max_i-1)}\n')
+    print(data_loss_table)
+else:
+    print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
+
+display(Markdown('![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.'))
+```
+
+    ‼️Geladene Exceldaten
+    {'sigma_0': array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          dtype=int64), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.    , 0.    , 0.    ]), 'sigma_1': array([0.2, 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. , 0. ,
+           0. , 0. , 0. , 0. , 0. , 0. , 0. ])}
+    Data-Loss bis sigma_19
+    
+        sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
+    0         1             0.2              0.20023                 -0.00023
+    1         0             0.0              0.03861                 -0.03861
+    2         0             0.0              0.03861                 -0.03861
+    3         0             0.0              0.03861                 -0.03861
+    4         0             0.0              0.03861                 -0.03861
+    5         0             0.0              0.03861                 -0.03861
+    6         0             0.0              0.03861                 -0.03861
+    7         0             0.0              0.03861                 -0.03861
+    8         0             0.0              0.03861                 -0.03861
+    9         0             0.0              0.03861                 -0.03861
+    10        0             0.0              0.03861                 -0.03861
+    11        0             0.0              0.03861                 -0.03861
+    12        0             0.0              0.03861                 -0.03861
+    13        0             0.0              0.03861                 -0.03861
+    14        0             0.0              0.03861                 -0.03861
+    15        0             0.0              0.03861                 -0.03861
+    16        0             0.0              0.03861                 -0.03861
+    17        0             0.0              0.03861                 -0.03861
+    18        0             0.0              0.03861                 -0.03861
+    19        0             0.0              0.03861                 -0.03861
+    
+
+
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+
+
+
+```python
+
+```
