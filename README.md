@@ -20,17 +20,17 @@ $$
 \begin{array}{rcl}
     \sigma_{t+1} & = & \sigma_{t}+\Delta\sigma \\ \\
     \Delta\sigma & = & E_s\cdot \Delta\epsilon \\ 
-    E_s & = & \frac{1+e_0}{C_c} \cdot \sigma
+    E_s & = & \frac{1+e_0}{C_c} \cdot \sigma_t
 \end{array}
 \hspace{2cm}
 \begin{array}{l}
     \textbf{Annahmen:} \\ \\
     \text{Startwert d. Iteration: } \sigma_0 = 1,00 \\ 
     e_0 = 1,00 \\ 
-    C_c = 0,0005
+    C_c = 0,005 \\
+    \Delta\epsilon = 0,0005
 \end{array}
 $$
-
 <div = style="text-align: center;">
     <img alt="Problem Oedometer Preview" src="./graph/problem_preview.png" width="50%" height=auto>
 </div>
@@ -572,10 +572,7 @@ display(Markdown('![Prediction vs True Solution](./graph/visual_prediction-vs-tr
 ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
 
 
-
-```python
 ## Visualisierung Error-Result
-```
 
 
 ```python
