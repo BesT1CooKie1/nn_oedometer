@@ -505,7 +505,7 @@ plt.ylabel("sigma_1")
 plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
 plt.legend()
 plt.grid()
-plt.savefig('./graph/visual_prediction-vs-truesolution_comp.png')
+plt.savefig('./graph/visual_prediction-vs-truesolution_comp0.png')
 
 # Überprüfen, ob die notwendigen Variablen existieren
 if 'data_dict' in globals() and 'sigma_1_pred' in globals():
@@ -526,7 +526,7 @@ if 'data_dict' in globals() and 'sigma_1_pred' in globals():
 else:
     print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
 
-display(Markdown(r'# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)'))
+display(Markdown(r'# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp0.png)'))
 ```
 
     ‼️Geladene Exceldaten
@@ -561,7 +561,7 @@ display(Markdown(r'# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> 
     
 
 
-# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)
+# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp0.png)
 
 
 # Testwerte (2 Input-Wert) $\Delta\epsilon=0,0005$
@@ -591,7 +591,7 @@ plt.ylabel("sigma_1")
 plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
 plt.legend()
 plt.grid()
-plt.savefig('./graph/visual_prediction-vs-truesolution_comp.png')
+plt.savefig('./graph/visual_prediction-vs-truesolution_comp1.png')
 
 # Überprüfen, ob die notwendigen Variablen existieren
 if 'data_dict' in globals() and 'sigma_1_pred' in globals():
@@ -612,7 +612,7 @@ if 'data_dict' in globals() and 'sigma_1_pred' in globals():
 else:
     print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
 
-display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>'))
+display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp1.png)<br>'))
 ```
 
     ‼️Geladene Exceldaten
@@ -648,7 +648,7 @@ display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![
     
 
 
-# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>
+# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp1.png)<br>
 
 
 # Testwerte (2 Input-Wert) $\Delta\epsilon=0,001$
@@ -678,7 +678,7 @@ plt.ylabel("sigma_1")
 plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
 plt.legend()
 plt.grid()
-plt.savefig('./graph/visual_prediction-vs-truesolution_comp.png')
+plt.savefig('./graph/visual_prediction-vs-truesolution_comp2.png')
 
 # Überprüfen, ob die notwendigen Variablen existieren
 if 'data_dict' in globals() and 'sigma_1_pred' in globals():
@@ -699,7 +699,7 @@ if 'data_dict' in globals() and 'sigma_1_pred' in globals():
 else:
     print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
 
-display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)'))
+display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp2.png)'))
 ```
 
     ‼️Geladene Exceldaten
@@ -735,7 +735,7 @@ display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> !
     
 
 
-# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)
+# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp2.png)
 
 
 Logischerweise hat er für den Parameter $\Delta\epsilon$ keine korrekte Berechnungs vorgenommen. Trotzdem wollte ich es mal darstellen
