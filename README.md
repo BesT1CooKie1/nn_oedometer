@@ -478,11 +478,7 @@ display(Markdown('![Loss Kurve](./graph/visual_loss.png)'))
 ![Loss Kurve](./graph/visual_loss.png)
 
 
-# Fazit
-
-Das Problem dieser Implementation ist, dass wir das Modell mit 20 Inpt Parametern gefüttert haben, die daraufhin auch immer erneut gefordert werden. Es ist also nicht möglich einen einzelnen Wert zu bestimmen, da das Modell nun weitere 19 Parameter braucht, um weitere Ausgaben zu generieren. <br>
-
-Im folgenden wird dargestellt, wie es aussehen würde, wenn man bspw. das Modell mit einem Tensor füttert, der nur den ersten Wert mit einem Wert gefüllt hat (Rest 0).
+# Testdaten (1 Input-Wert) $\Delta\epsilon=0,0005$
 
 
 ```python
@@ -530,7 +526,7 @@ if 'data_dict' in globals() and 'sigma_1_pred' in globals():
 else:
     print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
 
-display(Markdown('![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.'))
+display(Markdown(r'# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)'))
 ```
 
     ‼️Geladene Exceldaten
@@ -565,10 +561,181 @@ display(Markdown('![Prediction vs True Solution](./graph/visual_prediction-vs-tr
     
 
 
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+# Visualisierung (1 Input-Wert) $\Delta\epsilon=0,0005$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)
 
+
+# Testwerte (2 Input-Wert) $\Delta\epsilon=0,0005$
 
 
 ```python
+new_data = extract_excel(file_path="files/oedometer/oedo_trainingsdata_compare2.xlsx", sheet_name="Res", selected_columns=[1, 3, 5], row_start_range=0)
 
+# Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
+input_data = LabelTensor(torch.tensor(
+    np.column_stack((new_data['sigma_0'], new_data['delta_epsilon'])), dtype=torch.float
+), ['sigma_0', 'delta_epsilon'])
+
+# Model-Vorhersage für sigma_1 berechnen
+sigma_1_pred = pinn(input_data).detach().numpy()
+
+# Plot der wahren vs. vorhergesagten Werte
+plt.figure(figsize=(10, 5))
+
+# True Solution als Punkte darstellen
+plt.scatter(new_data['sigma_0'][0:max_i], new_data['sigma_1'][0:max_i], label="True Solution (sigma_1)", color='blue', marker='o')
+# NN Prediction als Linie darstellen
+plt.scatter(new_data['sigma_0'][0:max_i], sigma_1_pred[0:max_i], label="NN Prediction (sigma_1)", linestyle='solid', color='red')
+
+plt.xlabel("sigma_0")
+plt.ylabel("sigma_1")
+plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
+plt.legend()
+plt.grid()
+plt.savefig('./graph/visual_prediction-vs-truesolution_comp.png')
+
+# Überprüfen, ob die notwendigen Variablen existieren
+if 'data_dict' in globals() and 'sigma_1_pred' in globals():
+    # Erstelle eine Tabelle für die übersichtliche Darstellung
+    data_loss_table = pd.DataFrame({
+        "sigma_t": np.round(new_data["sigma_0"][0:max_i], 5),
+        "True sigma_t+1": np.round(new_data["sigma_1"][0:max_i], 5),
+        "Predicted sigma_t+1": np.round(sigma_1_pred[0:max_i].flatten(), 5),
+        "Loss (True - Predicted)": np.round(new_data["sigma_1"][0:max_i] - sigma_1_pred[0:max_i].flatten(), 5)
+    })
+
+    pd.set_option('display.max_rows', None)  # Keine Begrenzung der Zeilen
+    pd.set_option('display.max_columns', None)  # Keine Begrenzung der Spalten
+    pd.set_option('display.width', 1000)  # Breite für bessere Lesbarkeit
+
+    print(f'Data-Loss bis sigma_{str(max_i-1)}\n')
+    print(data_loss_table)
+else:
+    print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
+
+display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>'))
 ```
+
+    ‼️Geladene Exceldaten
+    {'sigma_0': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
+              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.    , 0.    , 0.    ]), 'sigma_1': array([300. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+           170.8,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+             0. ,   0. ])}
+    Data-Loss bis sigma_19
+    
+        sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
+    0      1500           300.0           299.636871                  0.36313
+    1         0             0.0             0.038610                 -0.03861
+    2         0             0.0             0.038610                 -0.03861
+    3         0             0.0             0.038610                 -0.03861
+    4         0             0.0             0.038610                 -0.03861
+    5         0             0.0             0.038610                 -0.03861
+    6         0             0.0             0.038610                 -0.03861
+    7         0             0.0             0.038610                 -0.03861
+    8         0             0.0             0.038610                 -0.03861
+    9       854           170.8           170.596603                  0.20340
+    10        0             0.0             0.038610                 -0.03861
+    11        0             0.0             0.038610                 -0.03861
+    12        0             0.0             0.038610                 -0.03861
+    13        0             0.0             0.038610                 -0.03861
+    14        0             0.0             0.038610                 -0.03861
+    15        0             0.0             0.038610                 -0.03861
+    16        0             0.0             0.038610                 -0.03861
+    17        0             0.0             0.038610                 -0.03861
+    18        0             0.0             0.038610                 -0.03861
+    19        0             0.0             0.038610                 -0.03861
+    
+
+
+# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,0005$<br>![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)<br>
+
+
+# Testwerte (2 Input-Wert) $\Delta\epsilon=0,001$
+
+
+```python
+new_data = extract_excel(file_path="files/oedometer/oedo_trainingsdata_compare3.xlsx", sheet_name="Res", selected_columns=[1, 3, 5], row_start_range=0)
+
+# Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
+input_data = LabelTensor(torch.tensor(
+    np.column_stack((new_data['sigma_0'], new_data['delta_epsilon'])), dtype=torch.float
+), ['sigma_0', 'delta_epsilon'])
+
+# Model-Vorhersage für sigma_1 berechnen
+sigma_1_pred = pinn(input_data).detach().numpy()
+
+# Plot der wahren vs. vorhergesagten Werte
+plt.figure(figsize=(10, 5))
+
+# True Solution als Punkte darstellen
+plt.scatter(new_data['sigma_0'][0:max_i], new_data['sigma_1'][0:max_i], label="True Solution (sigma_1)", color='blue', marker='o')
+# NN Prediction als Linie darstellen
+plt.scatter(new_data['sigma_0'][0:max_i], sigma_1_pred[0:max_i], label="NN Prediction (sigma_1)", linestyle='solid', color='red')
+
+plt.xlabel("sigma_0")
+plt.ylabel("sigma_1")
+plt.title(f"Prediction vs. True Solution (delta_epsilon=0.0005, max_i={str(max_i-1)})")
+plt.legend()
+plt.grid()
+plt.savefig('./graph/visual_prediction-vs-truesolution_comp.png')
+
+# Überprüfen, ob die notwendigen Variablen existieren
+if 'data_dict' in globals() and 'sigma_1_pred' in globals():
+    # Erstelle eine Tabelle für die übersichtliche Darstellung
+    data_loss_table = pd.DataFrame({
+        "sigma_t": np.round(new_data["sigma_0"][0:max_i], 5),
+        "True sigma_t+1": np.round(new_data["sigma_1"][0:max_i], 5),
+        "Predicted sigma_t+1": np.round(sigma_1_pred[0:max_i].flatten(), 5),
+        "Loss (True - Predicted)": np.round(new_data["sigma_1"][0:max_i] - sigma_1_pred[0:max_i].flatten(), 5)
+    })
+
+    pd.set_option('display.max_rows', None)  # Keine Begrenzung der Zeilen
+    pd.set_option('display.max_columns', None)  # Keine Begrenzung der Spalten
+    pd.set_option('display.width', 1000)  # Breite für bessere Lesbarkeit
+
+    print(f'Data-Loss bis sigma_{str(max_i-1)}\n')
+    print(data_loss_table)
+else:
+    print("Fehler: `data_dict` oder `sigma_1_pred` ist nicht definiert!")
+
+display(Markdown(r'# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)'))
+```
+
+    ‼️Geladene Exceldaten
+    {'sigma_0': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
+              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'delta_epsilon': array([0.001, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
+           0.001, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
+           0.   , 0.   ]), 'sigma_1': array([600. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+           341.6,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+             0. ,   0. ])}
+    Data-Loss bis sigma_19
+    
+        sigma_t  True sigma_t+1  Predicted sigma_t+1  Loss (True - Predicted)
+    0      1500           600.0           299.636871                300.36313
+    1         0             0.0             0.038610                 -0.03861
+    2         0             0.0             0.038610                 -0.03861
+    3         0             0.0             0.038610                 -0.03861
+    4         0             0.0             0.038610                 -0.03861
+    5         0             0.0             0.038610                 -0.03861
+    6         0             0.0             0.038610                 -0.03861
+    7         0             0.0             0.038610                 -0.03861
+    8         0             0.0             0.038610                 -0.03861
+    9       854           341.6           170.596573                171.00343
+    10        0             0.0             0.038610                 -0.03861
+    11        0             0.0             0.038610                 -0.03861
+    12        0             0.0             0.038610                 -0.03861
+    13        0             0.0             0.038610                 -0.03861
+    14        0             0.0             0.038610                 -0.03861
+    15        0             0.0             0.038610                 -0.03861
+    16        0             0.0             0.038610                 -0.03861
+    17        0             0.0             0.038610                 -0.03861
+    18        0             0.0             0.038610                 -0.03861
+    19        0             0.0             0.038610                 -0.03861
+    
+
+
+# Visualisierung (2 Input-Wert) $\Delta\epsilon=0,001$ <br> ![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp.png)
+
+
+Logischerweise hat er für den Parameter $\Delta\epsilon$ keine korrekte Berechnungs vorgenommen. Trotzdem wollte ich es mal darstellen
