@@ -775,33 +775,21 @@ print('\nFinale Loss Werte')
 trainer.logged_metrics
 ```
 
+    GPU available: False, used: False
+    TPU available: False, using: 0 TPU cores
+    HPU available: False, using: 0 HPUs
+    
+
     Debugging Info:
     ‼️Länge der Eingabepunkte (input_pts): 100
     ‼️Länge der Ausgabepunkte (output_pts): 100
     
 
-    GPU available: False, used: False
-    TPU available: False, using: 0 TPU cores
-    HPU available: False, using: 0 HPUs
     C:\Users\hab185\Documents\00_Tim\01_Implementierung\pina_oedometer\venv\Lib\site-packages\pytorch_lightning\loops\fit_loop.py:310: The number of training batches (10) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
     
 
 
     Training: |                                                                                      | 0/? [00:00<…
-
-
-    `Trainer.fit` stopped: `max_epochs=1000` reached.
-    
-
-    
-    Finale Loss Werte
-    
-
-
-
-
-    {'data_loss': tensor(6.4086e+10), 'mean_loss': tensor(6.4086e+10)}
-
 
 
 ## **Visualisierung der Modellvorhersage für delta_sigma**
@@ -824,38 +812,6 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=data_dict, graph_folder=gr
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20)
 ```
 
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|---------------|--------------------|------------------------|
-| 0 | 0 | 0.2 | 0.3615 | -0.1615 |
-| 1 | 0.0005 | 0.24 | 0.3939 | -0.1539 |
-| 2 | 0.001 | 0.288 | 0.4331 | -0.1451 |
-| 3 | 0.0015 | 0.3456 | 0.4817 | -0.1361 |
-| 4 | 0.002 | 0.4147 | 0.5405 | -0.1258 |
-| 5 | 0.0025 | 0.4977 | 0.5939 | -0.0962 |
-| 6 | 0.003 | 0.5972 | 0.6744 | -0.0772 |
-| 7 | 0.0035 | 0.7166 | 0.7726 | -0.056 |
-| 8 | 0.004 | 0.86 | 0.8904 | -0.0304 |
-| 9 | 0.0045 | 1.032 | 1.028 | 0.004 |
-| 10 | 0.005 | 1.2383 | 1.1987 | 0.0396 |
-| 11 | 0.0055 | 1.486 | 1.4124 | 0.0736 |
-| 12 | 0.006 | 1.7832 | 1.6724 | 0.1109 |
-| 13 | 0.0065 | 2.1399 | 1.9945 | 0.1454 |
-| 14 | 0.007 | 2.5678 | 2.3848 | 0.183 |
-| 15 | 0.0075 | 3.0814 | 2.8532 | 0.2282 |
-| 16 | 0.008 | 3.6977 | 3.4135 | 0.2842 |
-| 17 | 0.0085 | 4.4372 | 4.0829 | 0.3544 |
-| 18 | 0.009 | 5.3247 | 4.8898 | 0.4349 |
-| 19 | 0.0095 | 6.3896 | 5.8659 | 0.5237 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
 ## Visualisierung Error-Result
 
 
@@ -863,10 +819,6 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=data_dict, graph_folder=gr
 pl.plot(solver=pinn, filename=f'./{graph_folder}/{img_nn_result_error}{img_extensions}')
 display(Markdown('![NN Error result](' + f'./{graph_folder}/{img_nn_result_error}{img_extensions}' + ')'))
 ```
-
-
-![NN Error result](./graph/img_nn_result_error.png)
-
 
 ## Visualisierung Loss-Kurve
 
@@ -877,10 +829,6 @@ display(Markdown('![NN Error result](' + f'./{graph_folder}/{img_nn_result_error
 pl.plot_loss(trainer, label='mean_loss', logy=True, filename=f'./{graph_folder}/{img_visual_loss}{img_extensions}')
 display(Markdown('![Loss Kurve](' + f'./{graph_folder}/{img_visual_loss}{img_extensions}' + ')'))
 ```
-
-
-![Loss Kurve](./graph/visual_loss.png)
-
 
 # Testdaten (1 Input-Wert) $\Delta\epsilon=0,0005$
 
@@ -898,47 +846,6 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
 ```
 
-    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0.    , 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
-           0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
-           0.0005, 0.0005, 0.0005, 0.0005]), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([300,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-             0,   0,   0,   0,   0,   0,   0], dtype=int64)}
-    
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|---------------|--------------------|------------------------|
-| 0 | 0.0 | 300 | 278.5733 | 21.4267 |
-| 1 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 2 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 3 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 4 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 5 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 6 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 7 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 8 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 9 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 10 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 11 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 12 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 13 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 14 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 15 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 16 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 17 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 18 | 0.0005 | 0 | 0.2587 | -0.2587 |
-| 19 | 0.0005 | 0 | 0.2587 | -0.2587 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp0.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
 # Testwerte (2 Input-Wert) $\Delta\epsilon=0,0005$
 
 
@@ -955,48 +862,6 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
 ```
 
-    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
-              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0.    , 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
-           0.0005, 0.0005, 0.001 , 0.001 , 0.001 , 0.001 , 0.001 , 0.001 ,
-           0.001 , 0.001 , 0.001 , 0.001 ]), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([300. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-           170.8,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-             0. ,   0. ])}
-    
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|---------------|--------------------|------------------------|
-| 0 | 0.0 | 300.0 | 278.5733 | 21.4267 |
-| 1 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 2 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 3 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 4 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 5 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 6 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 7 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 8 | 0.0005 | 0.0 | 0.2587 | -0.2587 |
-| 9 | 0.0005 | 170.8 | 158.5627 | 12.2373 |
-| 10 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 11 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 12 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 13 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 14 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 15 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 16 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 17 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 18 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 19 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp1.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
 # Testwerte (2 Input-Wert) $\Delta\epsilon=0,001$
 
 
@@ -1012,47 +877,5 @@ display_data_loss_table(data_dict=new_data, delta_sigma_pred=pinn(input_data).de
 plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=graph_folder, img_visual_prediction_vs_truesolution=img_visual_prediction_vs_truesolution_comp2, 
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
 ```
-
-    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
-              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0.   , 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
-           0.001, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002,
-           0.002, 0.002]), 'delta_epsilon': array([0.001, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
-           0.001, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
-           0.   , 0.   ]), 'delta_sigma': array([600. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-           341.6,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-             0. ,   0. ])}
-    
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|---------------|--------------------|------------------------|
-| 0 | 0.0 | 600.0 | 278.5733 | 321.4267 |
-| 1 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 2 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 3 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 4 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 5 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 6 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 7 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 8 | 0.001 | 0.0 | 0.2587 | -0.2587 |
-| 9 | 0.001 | 341.6 | 158.5627 | 183.0374 |
-| 10 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 11 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 12 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 13 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 14 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 15 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 16 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 17 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 18 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-| 19 | 0.002 | 0.0 | 0.2587 | -0.2587 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp2.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
 
 Gemäß statischem Trainingswert für $\Delta\epsilon$ wurde keine korrekte Prognose vorgenommen.
