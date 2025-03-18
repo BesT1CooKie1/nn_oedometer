@@ -792,6 +792,20 @@ trainer.logged_metrics
     Training: |                                                                                      | 0/? [00:00<…
 
 
+    `Trainer.fit` stopped: `max_epochs=1000` reached.
+    
+
+    
+    Finale Loss Werte
+    
+
+
+
+
+    {'data_loss': tensor(0.2160), 'mean_loss': tensor(0.2160)}
+
+
+
 ## **Visualisierung der Modellvorhersage für delta_sigma**
 
 Dieser Code erstellt einen **Plot der wahren Werte (`delta_sigma`)** im Vergleich zur **Vorhersage des neuronalen Netzwerks**.
@@ -812,6 +826,38 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=data_dict, graph_folder=gr
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20)
 ```
 
+
+### Data-Loss bis sigma_19
+
+| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
+|--|--------------|---------------|--------------------|------------------------|
+| 0 | 0 | 0.2 | 0.2001 | -0.0001 |
+| 1 | 0.0005 | 0.24 | 0.2402 | -0.0002 |
+| 2 | 0.001 | 0.288 | 0.2883 | -0.0003 |
+| 3 | 0.0015 | 0.3456 | 0.346 | -0.0004 |
+| 4 | 0.002 | 0.4147 | 0.415 | -0.0003 |
+| 5 | 0.0025 | 0.4977 | 0.4972 | 0.0004 |
+| 6 | 0.003 | 0.5972 | 0.5958 | 0.0014 |
+| 7 | 0.0035 | 0.7166 | 0.7218 | -0.0052 |
+| 8 | 0.004 | 0.86 | 0.8596 | 0.0004 |
+| 9 | 0.0045 | 1.032 | 1.0312 | 0.0008 |
+| 10 | 0.005 | 1.2383 | 1.2438 | -0.0054 |
+| 11 | 0.0055 | 1.486 | 1.469 | 0.0171 |
+| 12 | 0.006 | 1.7832 | 1.7415 | 0.0417 |
+| 13 | 0.0065 | 2.1399 | 2.0951 | 0.0447 |
+| 14 | 0.007 | 2.5678 | 2.5268 | 0.0411 |
+| 15 | 0.0075 | 3.0814 | 3.0462 | 0.0352 |
+| 16 | 0.008 | 3.6977 | 3.7234 | -0.0257 |
+| 17 | 0.0085 | 4.4372 | 4.4499 | -0.0127 |
+| 18 | 0.009 | 5.3247 | 5.4215 | -0.0969 |
+| 19 | 0.0095 | 6.3896 | 6.6629 | -0.2733 |
+
+
+
+
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+
+
 ## Visualisierung Error-Result
 
 
@@ -819,6 +865,10 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=data_dict, graph_folder=gr
 pl.plot(solver=pinn, filename=f'./{graph_folder}/{img_nn_result_error}{img_extensions}')
 display(Markdown('![NN Error result](' + f'./{graph_folder}/{img_nn_result_error}{img_extensions}' + ')'))
 ```
+
+
+![NN Error result](./graph/img_nn_result_error.png)
+
 
 ## Visualisierung Loss-Kurve
 
@@ -829,6 +879,10 @@ display(Markdown('![NN Error result](' + f'./{graph_folder}/{img_nn_result_error
 pl.plot_loss(trainer, label='mean_loss', logy=True, filename=f'./{graph_folder}/{img_visual_loss}{img_extensions}')
 display(Markdown('![Loss Kurve](' + f'./{graph_folder}/{img_visual_loss}{img_extensions}' + ')'))
 ```
+
+
+![Loss Kurve](./graph/visual_loss.png)
+
 
 # Testdaten (1 Input-Wert) $\Delta\epsilon=0,0005$
 
@@ -846,6 +900,47 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
 ```
 
+    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0.    , 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
+           0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
+           0.0005, 0.0005, 0.0005, 0.0005]), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([300,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+             0,   0,   0,   0,   0,   0,   0], dtype=int64)}
+    
+
+
+### Data-Loss bis sigma_19
+
+| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
+|--|--------------|---------------|--------------------|------------------------|
+| 0 | 0.0 | 300 | 300.5455 | -0.5455 |
+| 1 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 2 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 3 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 4 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 5 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 6 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 7 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 8 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 9 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 10 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 11 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 12 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 13 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 14 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 15 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 16 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 17 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 18 | 0.0005 | 0 | 0.0858 | -0.0858 |
+| 19 | 0.0005 | 0 | 0.0858 | -0.0858 |
+
+
+
+
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp0.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+
+
 # Testwerte (2 Input-Wert) $\Delta\epsilon=0,0005$
 
 
@@ -862,6 +957,48 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
 ```
 
+    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
+              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0.    , 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005, 0.0005,
+           0.0005, 0.0005, 0.001 , 0.001 , 0.001 , 0.001 , 0.001 , 0.001 ,
+           0.001 , 0.001 , 0.001 , 0.001 ]), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
+           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([300. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+           170.8,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+             0. ,   0. ])}
+    
+
+
+### Data-Loss bis sigma_19
+
+| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
+|--|--------------|---------------|--------------------|------------------------|
+| 0 | 0.0 | 300.0 | 300.5455 | -0.5455 |
+| 1 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 2 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 3 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 4 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 5 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 6 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 7 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 8 | 0.0005 | 0.0 | 0.0858 | -0.0858 |
+| 9 | 0.0005 | 170.8 | 171.3456 | -0.5456 |
+| 10 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 11 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 12 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 13 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 14 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 15 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 16 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 17 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 18 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 19 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+
+
+
+
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp1.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+
+
 # Testwerte (2 Input-Wert) $\Delta\epsilon=0,001$
 
 
@@ -877,5 +1014,47 @@ display_data_loss_table(data_dict=new_data, delta_sigma_pred=pinn(input_data).de
 plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=graph_folder, img_visual_prediction_vs_truesolution=img_visual_prediction_vs_truesolution_comp2, 
                                      img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
 ```
+
+    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
+              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0.   , 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001,
+           0.001, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002,
+           0.002, 0.002]), 'delta_epsilon': array([0.001, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
+           0.001, 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   , 0.   ,
+           0.   , 0.   ]), 'delta_sigma': array([600. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+           341.6,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
+             0. ,   0. ])}
+    
+
+
+### Data-Loss bis sigma_19
+
+| Index | total_epsilon | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
+|--|--------------|---------------|--------------------|------------------------|
+| 0 | 0.0 | 600.0 | 300.5456 | 299.4544 |
+| 1 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 2 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 3 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 4 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 5 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 6 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 7 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 8 | 0.001 | 0.0 | 0.0858 | -0.0858 |
+| 9 | 0.001 | 341.6 | 171.3455 | 170.2545 |
+| 10 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 11 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 12 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 13 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 14 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 15 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 16 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 17 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 18 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+| 19 | 0.002 | 0.0 | 0.0858 | -0.0858 |
+
+
+
+
+![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp2.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
+
 
 Gemäß statischem Trainingswert für $\Delta\epsilon$ wurde keine korrekte Prognose vorgenommen.
