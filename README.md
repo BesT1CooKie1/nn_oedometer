@@ -64,8 +64,6 @@ max_input_pts = 20
 # Trainingsdaten e_0:float=1.00, C_c:float=0.005, delta_epsilon:float=0.0005, sigma_t:float=1.00, max_n:int=50
 oedo_parameter = {'e_0':1.00, 'C_c':0.005, 'delta_epsilon':0.0005, 'sigma_t':1.00, 'max_n':100, 'rand_epsilon':False}
 
-new_test = False
-
 graph_folder = 'graph'
 img_extensions = '.png'
 
@@ -170,9 +168,9 @@ def display_data_loss_table(data_dict, delta_sigma_pred, max_i):
         "total_epsilon" : list(total_epsilon[:min_len]), 
         "delta_epsilon" : list(delta_epsilon[:min_len]), 
         "sigma_t" : list(sigma_t[:min_len]), 
-        "True sigma_t+1": list(delta_sigma_true[:min_len]),
-        "Predicted sigma_t+1": list(delta_sigma_pred[:min_len]),
-        "Loss (True - Predicted)": list(np.round(np.array(delta_sigma_true[:min_len]) - np.array(delta_sigma_pred[:min_len]), 5))
+        "True delta_sigma": list(delta_sigma_true[:min_len]),
+        "Predicted delta_sigma": list(delta_sigma_pred[:min_len]),
+        "Test-Loss (True - Predicted)": list(np.round(np.array(delta_sigma_true[:min_len]) - np.array(delta_sigma_pred[:min_len]), 5))
     }
 
     # Markdown-Tabelle für bessere Darstellung in Jupyter
@@ -543,25 +541,8 @@ from pina.problem import AbstractProblem
 from pina.geometry import CartesianDomain
 from pina import Condition
 
-# Datengenerierung, falls Randbedingungen definiert
-# problem.discretise_domain(n=993, mode='random', variables='all', locations='all') # Notwendig, wenn "input_pts" und "output_pts" nicht vorgegeben sind
-if new_test:
-    # Trainingsdaten e_0:float=1.00, C_c:float=0.005, delta_epsilon:float=0.0005, sigma_t:float=1.00, max_n:int=50
-    oedo_parameter = {'e_0':1.00, 'C_c':0.005, 'delta_epsilon':0.0005, 'sigma_t':1.00, 'max_n':100, 'rand_epsilon':False}
-    input_conditions = {}
-    for i in range(max_input_pts):
-        oedo_parameter['delta_epsilon'] = oedo_parameter['delta_epsilon'] + .0001
-        data_dict = vars(Oedometer(**oedo_parameter))
 
-        sigma_t_train = LabelTensor(tensor(data_dict['sigma_t'][0], dtype=torch.float).unsqueeze(-1),['sigma_t'])
-        delta_epsilon_train = LabelTensor(tensor(data_dict['delta_epsilon'][0], dtype=torch.float).unsqueeze(-1), ['delta_epsilon'])
-        delta_sigma_train = LabelTensor(tensor(data_dict['delta_sigma'][0], dtype=torch.float).unsqueeze(-1), ['delta_sigma'])
-        # Kombinieren der Trainingsdaten (Verwendung von 'np.column_stack' für bessere Performance)
-        input_points_combined = LabelTensor(torch.tensor(np.column_stack([data_dict['sigma_t'][0], data_dict['delta_epsilon'][0]]), dtype=torch.float), ['sigma_t', 'delta_epsilon'])
-
-        input_conditions['condition' + str(i)] = Condition(input_points=input_points_combined, output_points=delta_sigma_train)
-else:
-    input_conditions = {'data': Condition(input_points=input_points_combined, output_points=delta_sigma_train),}
+input_conditions = {'data': Condition(input_points=input_points_combined, output_points=delta_sigma_train),}
 
 
 class SimpleODE(AbstractProblem):
@@ -779,19 +760,21 @@ print('\nFinale Loss Werte')
 trainer.logged_metrics
 ```
 
+    GPU available: False, used: False
+    
+
     Debugging Info:
     ‼️Länge der Eingabepunkte (input_pts): 1
     ‼️Länge der Ausgabepunkte (output_pts): 100
     
 
-    GPU available: False, used: False
     TPU available: False, using: 0 TPU cores
     HPU available: False, using: 0 HPUs
     C:\Users\hab185\Documents\00_Tim\01_Implementierung\pina_oedometer\venv\Lib\site-packages\pytorch_lightning\loops\fit_loop.py:310: The number of training batches (10) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
     
 
 
-    Training: |                                                                                      | 0/? [00:00<…
+    Training: |                                                                    | 0/? [00:00<?, ?it/s]
 
 
     `Trainer.fit` stopped: `max_epochs=1000` reached.
@@ -804,7 +787,7 @@ trainer.logged_metrics
 
 
 
-    {'data_loss': tensor(0.0098), 'mean_loss': tensor(0.0098)}
+    {'data_loss': tensor(0.0457), 'mean_loss': tensor(0.0457)}
 
 
 
@@ -831,28 +814,28 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=data_dict, graph_folder=gr
 
 ### Data-Loss bis sigma_19
 
-| Index | total_epsilon | delta_epsilon | sigma_t | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|--------------|--------|---------------|--------------------|------------------------|
-| 0 | 0 | 0.0005 | 1.0 | 0.2 | 0.2016 | -0.0016 |
-| 1 | 0.0005 | 0.0005 | 1.2 | 0.24 | 0.2413 | -0.0014 |
-| 2 | 0.001 | 0.0005 | 1.44 | 0.288 | 0.2892 | -0.0012 |
-| 3 | 0.0015 | 0.0005 | 1.728 | 0.3456 | 0.3465 | -0.0009 |
-| 4 | 0.002 | 0.0005 | 2.0736 | 0.4147 | 0.4151 | -0.0003 |
-| 5 | 0.0025 | 0.0005 | 2.4883 | 0.4977 | 0.4976 | 0.0001 |
-| 6 | 0.003 | 0.0005 | 2.986 | 0.5972 | 0.5973 | -0.0001 |
-| 7 | 0.0035 | 0.0005 | 3.5832 | 0.7166 | 0.7162 | 0.0005 |
-| 8 | 0.004 | 0.0005 | 4.2998 | 0.86 | 0.8603 | -0.0004 |
-| 9 | 0.0045 | 0.0005 | 5.1598 | 1.032 | 1.0333 | -0.0013 |
-| 10 | 0.005 | 0.0005 | 6.1917 | 1.2383 | 1.2396 | -0.0012 |
-| 11 | 0.0055 | 0.0005 | 7.4301 | 1.486 | 1.4871 | -0.0011 |
-| 12 | 0.006 | 0.0005 | 8.9161 | 1.7832 | 1.7847 | -0.0015 |
-| 13 | 0.0065 | 0.0005 | 10.6993 | 2.1399 | 2.14 | -0.0001 |
-| 14 | 0.007 | 0.0005 | 12.8392 | 2.5678 | 2.5659 | 0.0019 |
-| 15 | 0.0075 | 0.0005 | 15.407 | 3.0814 | 3.0771 | 0.0043 |
-| 16 | 0.008 | 0.0005 | 18.4884 | 3.6977 | 3.6944 | 0.0033 |
-| 17 | 0.0085 | 0.0005 | 22.1861 | 4.4372 | 4.4384 | -0.0012 |
-| 18 | 0.009 | 0.0005 | 26.6233 | 5.3247 | 5.3293 | -0.0047 |
-| 19 | 0.0095 | 0.0005 | 31.948 | 6.3896 | 6.4099 | -0.0203 |
+| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
+|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
+| 0 | 0 | 0.0005 | 1.0 | 0.2 | 0.2039 | -0.0039 |
+| 1 | 0.0005 | 0.0005 | 1.2 | 0.24 | 0.2398 | 0.0002 |
+| 2 | 0.001 | 0.0005 | 1.44 | 0.288 | 0.2866 | 0.0014 |
+| 3 | 0.0015 | 0.0005 | 1.728 | 0.3456 | 0.3468 | -0.0012 |
+| 4 | 0.002 | 0.0005 | 2.0736 | 0.4147 | 0.4174 | -0.0027 |
+| 5 | 0.0025 | 0.0005 | 2.4883 | 0.4977 | 0.4939 | 0.0038 |
+| 6 | 0.003 | 0.0005 | 2.986 | 0.5972 | 0.5999 | -0.0026 |
+| 7 | 0.0035 | 0.0005 | 3.5832 | 0.7166 | 0.7193 | -0.0027 |
+| 8 | 0.004 | 0.0005 | 4.2998 | 0.86 | 0.8565 | 0.0035 |
+| 9 | 0.0045 | 0.0005 | 5.1598 | 1.032 | 1.0318 | 0.0002 |
+| 10 | 0.005 | 0.0005 | 6.1917 | 1.2383 | 1.2374 | 0.001 |
+| 11 | 0.0055 | 0.0005 | 7.4301 | 1.486 | 1.482 | 0.004 |
+| 12 | 0.006 | 0.0005 | 8.9161 | 1.7832 | 1.7763 | 0.0069 |
+| 13 | 0.0065 | 0.0005 | 10.6993 | 2.1399 | 2.1297 | 0.0102 |
+| 14 | 0.007 | 0.0005 | 12.8392 | 2.5678 | 2.5749 | -0.007 |
+| 15 | 0.0075 | 0.0005 | 15.407 | 3.0814 | 3.1103 | -0.0288 |
+| 16 | 0.008 | 0.0005 | 18.4884 | 3.6977 | 3.7463 | -0.0486 |
+| 17 | 0.0085 | 0.0005 | 22.1861 | 4.4372 | 4.5096 | -0.0724 |
+| 18 | 0.009 | 0.0005 | 26.6233 | 5.3247 | 5.4207 | -0.096 |
+| 19 | 0.0095 | 0.0005 | 31.948 | 6.3896 | 6.5035 | -0.1139 |
 
 
 
@@ -913,28 +896,28 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
 
 ### Data-Loss bis sigma_19
 
-| Index | total_epsilon | delta_epsilon | sigma_t | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|--------------|--------|---------------|--------------------|------------------------|
-| 0 | 0 | 0.0005 | 1500 | 300 | 300.0682 | -0.0682 |
-| 1 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 2 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 3 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 4 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 5 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 6 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 7 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 8 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 9 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 10 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 11 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 12 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 13 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 14 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 15 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 16 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 17 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 18 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
-| 19 | 0 | 0.0 | 0 | 0 | 0.0852 | -0.0852 |
+| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
+|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
+| 0 | 0 | 0.0005 | 1500 | 300 | 300.1602 | -0.1602 |
+| 1 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 2 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 3 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 4 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 5 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 6 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 7 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 8 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 9 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 10 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 11 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 12 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 13 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 14 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 15 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 16 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 17 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 18 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
+| 19 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
 
 
 
@@ -970,28 +953,28 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
 
 ### Data-Loss bis sigma_19
 
-| Index | total_epsilon | delta_epsilon | sigma_t | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|--------------|--------|---------------|--------------------|------------------------|
-| 0 | 0 | 0.0005 | 1500 | 300.0 | 300.0682 | -0.0682 |
-| 1 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 2 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 3 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 4 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 5 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 6 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 7 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 8 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 9 | 0 | 0.0005 | 854 | 170.8 | 170.8682 | -0.0682 |
-| 10 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 11 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 12 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 13 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 14 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 15 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 16 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 17 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 18 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 19 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
+| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
+|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
+| 0 | 0 | 0.0005 | 1500 | 300.0 | 300.1602 | -0.1602 |
+| 1 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 2 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 3 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 4 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 5 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 6 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 7 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 8 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 9 | 0 | 0.0005 | 854 | 170.8 | 170.9602 | -0.1602 |
+| 10 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 11 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 12 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 13 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 14 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 15 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 16 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 17 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 18 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 19 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
 
 
 
@@ -1027,28 +1010,28 @@ plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=gra
 
 ### Data-Loss bis sigma_19
 
-| Index | total_epsilon | delta_epsilon | sigma_t | True sigma_t+1 | Predicted sigma_t+1 | Loss (True - Predicted) |
-|--|--------------|--------------|--------|---------------|--------------------|------------------------|
-| 0 | 0 | 0.001 | 1500 | 600.0 | 300.0681 | 299.9319 |
-| 1 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 2 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 3 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 4 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 5 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 6 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 7 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 8 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 9 | 0 | 0.0005 | 854 | 341.6 | 170.8682 | 170.7318 |
-| 10 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 11 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 12 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 13 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 14 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 15 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 16 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 17 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 18 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
-| 19 | 0 | 0.0 | 0 | 0.0 | 0.0852 | -0.0852 |
+| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
+|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
+| 0 | 0 | 0.001 | 1500 | 600.0 | 300.1602 | 299.8398 |
+| 1 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 2 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 3 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 4 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 5 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 6 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 7 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 8 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 9 | 0 | 0.0005 | 854 | 341.6 | 170.9602 | 170.6398 |
+| 10 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 11 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 12 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 13 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 14 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 15 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 16 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 17 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 18 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
+| 19 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
 
 
 

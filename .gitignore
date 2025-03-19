@@ -1,6 +1,7 @@
 # Ordner ignorieren
 __pycache__  
-venv  
+venv
+files/tutorial*
 
 # Bestimmte Dateien ignorieren
 .log  
