@@ -20,6 +20,7 @@ if not defined selected_file (
 )
 
 echo Konvertiere "!selected_file!" nach README.md...
+call venv\Scripts\activate.bat
 jupyter nbconvert "!selected_file!" --to markdown --output README.md
 
 echo ✅ README.md wurde erfolgreich erstellt!

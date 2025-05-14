@@ -1,59 +1,27 @@
-# Vorhersage des Ödometerversuches implementiert mit PINA
-Ziel war die Implementierung eines neuronalen Netzwerks zur Modellierung des Ödometerversuchs. Dabei wurden gegebene Input-Parameter verarbeitet, um Output-Parameter vorherzusagen. Die physikalischen Rahmenbedingungen wurden zunächst auf Null gesetzt, sodass das Modell ausschließlich auf der KI-basierten Struktur arbeitet, ohne physikalische Optimierungen durch Physical Informed Neural Networks (PINNs).
-<br>
-Diese grundlegende Umsetzung bildet die Basis für weiterführende Optimierungen, wie die Integration physikalischer Gesetzmäßigkeiten, die jedoch nicht Teil des initialen Arbeitsauftrags waren.
-
-### Was ist PINA?
-PINA ist eine Open-Source-Python-Bibliothek, die eine intuitive Schnittstelle zur Lösung von Differentialgleichungen bietet, indem sie Physik-informierte Neuronale Netze (PINNs), Neuronale Operatoren (NOs) oder eine Kombination aus beiden verwendet. Basierend auf PyTorch und PyTorch Lightning ermöglicht PINA die formale Darstellung spezifischer (differentieller) Probleme und deren Lösung mittels neuronaler Netze.<br><br>
-<strong>Hauptmerkmale von PINA:</strong>
-
-- <span style="color:gray;"><i>Problemformulierung: Ermöglicht die Übersetzung mathematischer Gleichungen in Python-Code, um das Differentialproblem zu definieren.</i></span>
-    - <small><i>→ In diesem Arbeitsauftrag nicht notwendig, da das neuronale Netzwerk ohne physikalische Gesetzmäßigkeiten trainiert wurde.</i></small>
-- Modelltraining: Bietet Werkzeuge zum Training neuronaler Netze zur Lösung des definierten Problems.
-- Lösungsauswertung: Erlaubt die Visualisierung und Analyse der approximierten Lösungen.
-
-<small><i>Hinweis: Die physikalische Modellierung und die Einbindung von Differentialgleichungen zur Optimierung des Netzwerks (z. B. mittels PINNs) war nicht Teil dieses Arbeitsauftrags, könnte aber in einem späteren Schritt ergänzt werden.</i></small>
-## Grundlagen
-In diesem Notebook wird der Ödometerversuch <strong>ohne</strong> Randbedingungen betrachtet. Es werden vorberechnetet Daten aus der Exceltabelle `files/oedometer/oedo_trainingsdata.xlsx` verwendet.<br>
-#### Das Problem ist wie folgt definiert:
-$$
-\begin{array}{rcl}
-    \sigma_{t+1} & = & \sigma_{t}+\Delta\sigma \\ \\
-    \Delta\sigma & = & E_s\cdot \Delta\epsilon \\ 
-    E_s & = & \frac{1+e_0}{C_c} \cdot \sigma_t
-\end{array}
-\hspace{2cm}
-\begin{array}{l}
-    \textbf{Annahmen:} \\ \\
-    \text{Startwert d. Iteration: } \sigma_t = 1,00 \\ 
-    e_0 = 1,00 \\ 
-    C_c = 0,005 \\
-    \Delta\epsilon = 0,0005
-\end{array}
-$$
-<div = style="text-align: center;">
-    <img alt="Problem Oedometer Preview" src="./graph/problem_preview.png" width="50%" height=auto>
-</div>
-
-<br> 
-
-Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ ; $\Delta\epsilon$ }, `Output` { $\sigma_{t+1}$ }.
-<br>
-### Variablendeklaration
-- $\sigma_t$ = `sigma_t`
-- $\Delta\epsilon$ = `delta_epsilon`
-- $\sigma_{t+1}$ = `delta_sigma`
-## Einstellungen und Utilities
+## Load modules & Check PyTorch
 
 
 ```python
-from IPython.display import display, Markdown
-import matplotlib
-matplotlib.use('Agg')  # Keine doppelte Darstellung des Plots
-import matplotlib.pyplot as plt
+# Import modules
 import torch
-import numpy as np
+import torch.nn as nn
+import torch.optim as optim
 
+from IPython.display import display, Markdown
+
+import seaborn as sns
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# for noramlization
+from sklearn.preprocessing import MinMaxScaler
+```
+
+## Parameters
+
+
+```python
 # Debugger: Aktiviert
 debug_mode = True
 # Normalisierung der Daten: Deaktiviert
@@ -63,19 +31,12 @@ max_input_pts = 20
 
 # Trainingsdaten e_0:float=1.00, C_c:float=0.005, delta_epsilon:float=0.0005, sigma_t:float=1.00, max_n:int=50
 oedo_parameter = {'e_0':1.00, 'C_c':0.005, 'delta_epsilon':0.0005, 'sigma_t':1.00, 'max_n':100, 'rand_epsilon':False}
+```
 
-graph_folder = 'graph'
-img_extensions = '.png'
+## Preloaded Modules
 
-img_visual_loss = 'visual_loss'
-img_nn_result_error = 'img_nn_result_error'
-img_visual_prediction_vs_truesolution_comp = 'visual_prediction-vs-truesolution_comp'
-img_visual_prediction_vs_truesolution_comp0 = 'visual_prediction-vs-truesolution_comp0'
-img_visual_prediction_vs_truesolution_comp1 = 'visual_prediction-vs-truesolution_comp1'
-img_visual_prediction_vs_truesolution_comp2 = 'visual_prediction-vs-truesolution_comp2'
-img_visual_prediction_vs_truesolution = 'visual_prediction-vs-truesolution'
-img_visual_sampling = 'visual_sampling'
 
+```python
 def dict_to_markdown_table(data: dict, title: str = "Datenübersicht", include_index: bool = True, round_digits: int = 4):
     """
     Wandelt ein Dictionary mit Listenwerten in eine Markdown-Tabelle für Jupyter Notebooks um.
@@ -175,97 +136,31 @@ def display_data_loss_table(data_dict, delta_sigma_pred, max_i):
 
     # Markdown-Tabelle für bessere Darstellung in Jupyter
     display(dict_to_markdown_table(data_loss_table, title=f"Data-Loss bis sigma_{min_len-1}", include_index=True))
-
-def plot_prediction_vs_true_solution(pinn, data_dict, graph_folder, img_visual_prediction_vs_truesolution, 
-                                     img_extensions, y_axis='delta_sigma', max_i=20, plot_type="line"):
-    """
-    Erstellt und speichert eine Vorhersage- vs. True-Solution-Grafik für ein gegebenes PINN-Modell.
-
-    :param pinn: Das trainierte PINN-Modell zur Vorhersage von delta_sigma
-    :param data_dict: Dictionary mit den Eingabe- und wahren Ausgabe-Daten
-    :param graph_folder: Ordner, in dem das Bild gespeichert wird
-    :param img_visual_prediction_vs_truesolution: Dateiname der gespeicherten Grafik (ohne Erweiterung)
-    :param img_extensions: Dateiformat der gespeicherten Grafik (z.B. '.png' oder '.jpg')
-    :param max_i: Anzahl der Datenpunkte, die im Plot gezeigt werden sollen (Default: 20)
-    :param delta_epsilon: Wert für delta_epsilon, um ihn im Titel anzuzeigen (optional)
-    :param plot_type: Art der Darstellung - "line" für Linienplot, "scatter" für Punktplot (Default: "line")
-    """
-
-    # Überprüfen, ob die notwendigen Keys vorhanden sind
-    if "sigma_t" not in data_dict or y_axis not in data_dict:
-        print(f"Fehler: sigma_t oder y_axis fehlen im data_dict!")
-        return
-
-    # Eingabedaten für das Modell vorbereiten
-    input_data = LabelTensor(torch.tensor(
-        np.column_stack((data_dict['sigma_t'], data_dict['delta_epsilon'])), 
-        dtype=torch.float), ['sigma_t', 'delta_epsilon'])
-
-    # Vorhersage berechnen
-    sigma_t_pred = pinn(input_data).detach().numpy()
-
-    # Plot erstellen
-    plt.figure(figsize=(10, 5))
-
-    y_vals = data_dict[y_axis][0:max_i]
-    x_true = data_dict['delta_sigma'][0:max_i]
-    x_pred = sigma_t_pred[0:max_i]
-
-    if plot_type == "line":
-        plt.plot(x_true, y_vals, label="True Solution (delta_sigma)", linestyle='dashed', color='blue')
-        plt.plot(x_pred, y_vals, label="NN Prediction (delta_sigma)", linestyle='solid', color='red')
-    elif plot_type == "scatter":
-        plt.scatter(x_true, y_vals, label="True Solution (delta_sigma)", color='blue', marker='o')
-        plt.scatter(x_pred, y_vals, label="NN Prediction (delta_sigma)", color='red', marker='x')
-
-    plt.xlabel("delta_sigma")
-    plt.ylabel(y_axis)
-    plt.title(f"Prediction vs. True Solution (max_i={max_i-1})")
-    plt.legend()
-    plt.grid()
-    plt.gca().invert_yaxis()
-    
-    # Bild speichern
-    img_path = f'./{graph_folder}/{img_visual_prediction_vs_truesolution}{img_extensions}'
-    plt.savefig(img_path)
-    plt.close()  # Verhindert doppelte Darstellung
-
-    # Markdown-Ausgabe in Jupyter Notebook
-    display(Markdown(f'![Prediction vs True Solution]({img_path})<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.'))
-
 ```
 
-## Laden der Daten aus `oedo_trainingsdata.xlsx`
+## Check for use of CONDA if available
 
 
 ```python
-import pandas as pd
-import numpy as np
-from sympy.integrals.heurisch import components
+use_cuda = torch.cuda.is_available()
+device = torch.device("cuda:0" if use_cuda else "cpu")
 
-def extract_excel(file_path, sheet_name, selected_columns, row_start_range):
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
-    
-    # Dynamische Ermittlung der letzten Zeile mit Daten
-    row_start_range = 0  # Startet bei Zeile 6 (0-basiert)
-    row_end_range = df.dropna(how="all").last_valid_index() + 1  # Letzte Zeile mit Daten
-        
-    # Daten extrahieren
-    data_subset = df.iloc[row_start_range:row_end_range, selected_columns]
-    data_dict = {col: np.array(data_subset[col]) for col in data_subset.columns}
-    
-    if debug_mode:
-        print(data_dict)
-        dict_to_markdown_table(data=data_dict,title=file_path)
-    
-    # Daten als dict speichern
-    return data_dict
-    
-if use_excel:
-    data_dict = extract_excel(file_path, sheet_name, selected_columns, row_start_range)
+if device.type == 'cpu':
+    device_num = 0
+    print('No GPU available.')
+else:
+    device_num = torch.cuda.device_count()
+    print('Device:', device, '-- Number of devices:', device_num)
 ```
 
-## Laden der Daten aus `Python`
+    No GPU available.
+    
+
+# Recurrent Neural Networks
+
+Just as people do not have to think again each time about the things they have already learned, it is also possible to teach neural networks to recall knowledge they were being taught. This is done in so-called Recurrent Neural Networks (RNNs) with loops inside, which allow information to be retained. Currently the most used architectures of RNNs are Long short-term memory (LSTM) networks. LSTMs are RNNs that overcome the problem of long-term dependencies and thus have achieved the most state-of-the-art results in this area. In this exercise we will look at how to use LSTMs to predict future values using time series data sets.
+
+## Data processing
 
 
 ```python
@@ -333,8 +228,44 @@ class Oedometer:
             self.delta_sigma.append(delta_sigma)
 
 if not use_excel:
-    data_dict = dict(vars(Oedometer(**oedo_parameter)))
-    display(dict_to_markdown_table(data_dict, 'Ödometerdaten'))
+    data_dict_raw = dict(vars(Oedometer(**oedo_parameter)))
+
+    # Leere Liste, um Datenzeilen zu sammeln
+    data_list = []
+    
+    # Beispielhafte Annahme: alle Listen in data_dict_raw haben dieselbe Länge
+    for i in range(len(data_dict_raw['sigma_t'])):
+        row = [
+            data_dict_raw['sigma_t'][i],
+            data_dict_raw['delta_epsilon'][i],
+            data_dict_raw['delta_sigma'][i]
+        ]
+        data_list.append(row)
+    
+    # Am Ende in ein numpy array umwandeln
+    data = np.array(data_list)
+
+    # Ausgabe
+    display(dict_to_markdown_table(data_dict_raw, 'Ödometerdaten'))
+    print(data)
+    
+
+def plot_input():
+    # Plot
+    plt.figure(figsize=(10, 5))
+    plt.plot(data_dict_raw['sigma_t'], data_dict_raw['delta_sigma'], marker='o', linestyle='-', label='Sigma_0 = 1')
+    
+    # Formatting
+    plt.xlabel('sigma_t')
+    plt.ylabel('delta_simga')
+    plt.title('Sigma_0 in relation to Sigma_1')
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+plot_input()
 ```
 
 
@@ -452,591 +383,605 @@ if not use_excel:
 
 
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    [[1.00000000e+00 5.00000000e-04 2.00000000e-01]
+     [1.20000000e+00 5.00000000e-04 2.40000000e-01]
+     [1.44000000e+00 5.00000000e-04 2.88000000e-01]
+     [1.72800000e+00 5.00000000e-04 3.45600000e-01]
+     [2.07360000e+00 5.00000000e-04 4.14720000e-01]
+     [2.48832000e+00 5.00000000e-04 4.97664000e-01]
+     [2.98598400e+00 5.00000000e-04 5.97196800e-01]
+     [3.58318080e+00 5.00000000e-04 7.16636160e-01]
+     [4.29981696e+00 5.00000000e-04 8.59963392e-01]
+     [5.15978035e+00 5.00000000e-04 1.03195607e+00]
+     [6.19173642e+00 5.00000000e-04 1.23834728e+00]
+     [7.43008371e+00 5.00000000e-04 1.48601674e+00]
+     [8.91610045e+00 5.00000000e-04 1.78322009e+00]
+     [1.06993205e+01 5.00000000e-04 2.13986411e+00]
+     [1.28391846e+01 5.00000000e-04 2.56783693e+00]
+     [1.54070216e+01 5.00000000e-04 3.08140431e+00]
+     [1.84884259e+01 5.00000000e-04 3.69768518e+00]
+     [2.21861111e+01 5.00000000e-04 4.43722221e+00]
+     [2.66233333e+01 5.00000000e-04 5.32466666e+00]
+     [3.19479999e+01 5.00000000e-04 6.38959999e+00]
+     [3.83375999e+01 5.00000000e-04 7.66751998e+00]
+     [4.60051199e+01 5.00000000e-04 9.20102398e+00]
+     [5.52061439e+01 5.00000000e-04 1.10412288e+01]
+     [6.62473727e+01 5.00000000e-04 1.32494745e+01]
+     [7.94968472e+01 5.00000000e-04 1.58993694e+01]
+     [9.53962166e+01 5.00000000e-04 1.90792433e+01]
+     [1.14475460e+02 5.00000000e-04 2.28950920e+01]
+     [1.37370552e+02 5.00000000e-04 2.74741104e+01]
+     [1.64844662e+02 5.00000000e-04 3.29689325e+01]
+     [1.97813595e+02 5.00000000e-04 3.95627190e+01]
+     [2.37376314e+02 5.00000000e-04 4.74752628e+01]
+     [2.84851577e+02 5.00000000e-04 5.69703153e+01]
+     [3.41821892e+02 5.00000000e-04 6.83643784e+01]
+     [4.10186270e+02 5.00000000e-04 8.20372540e+01]
+     [4.92223524e+02 5.00000000e-04 9.84447049e+01]
+     [5.90668229e+02 5.00000000e-04 1.18133646e+02]
+     [7.08801875e+02 5.00000000e-04 1.41760375e+02]
+     [8.50562250e+02 5.00000000e-04 1.70112450e+02]
+     [1.02067470e+03 5.00000000e-04 2.04134940e+02]
+     [1.22480964e+03 5.00000000e-04 2.44961928e+02]
+     [1.46977157e+03 5.00000000e-04 2.93954314e+02]
+     [1.76372588e+03 5.00000000e-04 3.52745176e+02]
+     [2.11647106e+03 5.00000000e-04 4.23294212e+02]
+     [2.53976527e+03 5.00000000e-04 5.07953054e+02]
+     [3.04771832e+03 5.00000000e-04 6.09543665e+02]
+     [3.65726199e+03 5.00000000e-04 7.31452398e+02]
+     [4.38871439e+03 5.00000000e-04 8.77742877e+02]
+     [5.26645726e+03 5.00000000e-04 1.05329145e+03]
+     [6.31974872e+03 5.00000000e-04 1.26394974e+03]
+     [7.58369846e+03 5.00000000e-04 1.51673969e+03]
+     [9.10043815e+03 5.00000000e-04 1.82008763e+03]
+     [1.09205258e+04 5.00000000e-04 2.18410516e+03]
+     [1.31046309e+04 5.00000000e-04 2.62092619e+03]
+     [1.57255571e+04 5.00000000e-04 3.14511142e+03]
+     [1.88706685e+04 5.00000000e-04 3.77413371e+03]
+     [2.26448023e+04 5.00000000e-04 4.52896045e+03]
+     [2.71737627e+04 5.00000000e-04 5.43475254e+03]
+     [3.26085153e+04 5.00000000e-04 6.52170305e+03]
+     [3.91302183e+04 5.00000000e-04 7.82604366e+03]
+     [4.69562620e+04 5.00000000e-04 9.39125239e+03]
+     [5.63475144e+04 5.00000000e-04 1.12695029e+04]
+     [6.76170172e+04 5.00000000e-04 1.35234034e+04]
+     [8.11404207e+04 5.00000000e-04 1.62280841e+04]
+     [9.73685048e+04 5.00000000e-04 1.94737010e+04]
+     [1.16842206e+05 5.00000000e-04 2.33684412e+04]
+     [1.40210647e+05 5.00000000e-04 2.80421294e+04]
+     [1.68252776e+05 5.00000000e-04 3.36505553e+04]
+     [2.01903332e+05 5.00000000e-04 4.03806663e+04]
+     [2.42283998e+05 5.00000000e-04 4.84567996e+04]
+     [2.90740797e+05 5.00000000e-04 5.81481595e+04]
+     [3.48888957e+05 5.00000000e-04 6.97777914e+04]
+     [4.18666748e+05 5.00000000e-04 8.37333497e+04]
+     [5.02400098e+05 5.00000000e-04 1.00480020e+05]
+     [6.02880118e+05 5.00000000e-04 1.20576024e+05]
+     [7.23456141e+05 5.00000000e-04 1.44691228e+05]
+     [8.68147369e+05 5.00000000e-04 1.73629474e+05]
+     [1.04177684e+06 5.00000000e-04 2.08355369e+05]
+     [1.25013221e+06 5.00000000e-04 2.50026442e+05]
+     [1.50015865e+06 5.00000000e-04 3.00031731e+05]
+     [1.80019039e+06 5.00000000e-04 3.60038077e+05]
+     [2.16022846e+06 5.00000000e-04 4.32045692e+05]
+     [2.59227415e+06 5.00000000e-04 5.18454831e+05]
+     [3.11072899e+06 5.00000000e-04 6.22145797e+05]
+     [3.73287478e+06 5.00000000e-04 7.46574956e+05]
+     [4.47944974e+06 5.00000000e-04 8.95889948e+05]
+     [5.37533969e+06 5.00000000e-04 1.07506794e+06]
+     [6.45040762e+06 5.00000000e-04 1.29008152e+06]
+     [7.74048915e+06 5.00000000e-04 1.54809783e+06]
+     [9.28858698e+06 5.00000000e-04 1.85771740e+06]
+     [1.11463044e+07 5.00000000e-04 2.22926087e+06]
+     [1.33755652e+07 5.00000000e-04 2.67511305e+06]
+     [1.60506783e+07 5.00000000e-04 3.21013566e+06]
+     [1.92608140e+07 5.00000000e-04 3.85216279e+06]
+     [2.31129768e+07 5.00000000e-04 4.62259535e+06]
+     [2.77355721e+07 5.00000000e-04 5.54711442e+06]
+     [3.32826865e+07 5.00000000e-04 6.65653730e+06]
+     [3.99392238e+07 5.00000000e-04 7.98784476e+06]
+     [4.79270686e+07 5.00000000e-04 9.58541372e+06]
+     [5.75124823e+07 5.00000000e-04 1.15024965e+07]
+     [6.90149788e+07 5.00000000e-04 1.38029958e+07]]
+    
 
-## Daten normalisieren
-Die Normalisierung von Daten für neuronale Netze bedeutet, dass Eingabedaten auf eine vergleichbare Skala gebracht werden, um das Training stabiler und effizienter zu machen. Hier verwendete Methode:
-- Min-Max-Skalierung: Werte auf einen Bereich (0 bis 1) bringen.  <i class="fa fa-info"> [Wiki](https://en.wikipedia.org/wiki/Feature_scaling#Methods)</i>
 
+    
+![png](README_files/README_10_2.png)
+    
+
+
+## Datenvorverarbeitung
+
+Da wir zukünftige Datenpunkte in dieser Übung vorhersagen möchten, haben wir zuerst unsere Zeitreihen am Ende geschnitten und diesen Grenzwert als Testdaten behandeln.
 
 
 ```python
-if normalize_data:
-    data_dict.update({'sigma_t_raw': data_dict.pop('sigma_t')})
-    data_dict.update({'delta_sigma_raw': data_dict.pop('delta_sigma')})
-    
-    sigma_t_min, sigma_t_max = data_dict['sigma_t_raw'].min(), data_dict['sigma_t_raw'].max()
-    delta_sigma_min, delta_sigma_max = data_dict['delta_sigma_raw'].min(), data_dict['delta_sigma_raw'].max()
-    
-    # Min-Max-Normalisierung
-    data_dict['sigma_t'] = (data_dict['sigma_t_raw'] - sigma_t_min) / (sigma_t_max - sigma_t_min)
-    data_dict['delta_sigma'] = (data_dict['delta_sigma_raw'] - delta_sigma_min) / (delta_sigma_max - delta_sigma_min)
-    print('‼️Tabellenwerte des Oedometerversuches normalisiert.')
-else:
-    print('‼️ Es wurde keine Normalisierung der Werte vorgenommen.')
+# Cut the end of the time series as test data
+# TODO start** 
+test_data_size = 10
+# trva = train and val
+trva_data = data[:-test_data_size]
+test_data = data[-test_data_size:] 
+
+print('Length of train data:', len(trva_data))
+print('Length of test data:', len(test_data))
 ```
 
-    ‼️ Es wurde keine Normalisierung der Werte vorgenommen.
+    Length of train data: 90
+    Length of test data: 10
     
 
-## **Datenvorbereitung für PINA mit LabelTensor**
-In diesem Code werden die Eingabedaten aus `data_dict` als **LabelTensor** gespeichert, um sie strukturiert und mit benannten Dimensionen für das neuronale Netz in PINA bereitzustellen.  
+Die *trva_data* werden jetzt normalisiert und in PyTorch Tensoren umgewandelt, wie aus den vorherigen Übungen bekannt. Der nächste Schritt ist jedoch besonders, indem Sequenzen aus den TRVA -Daten erstellt werden. Daher verwenden wir die Helferfunktion *create_inout_sequences (Eingabedaten, Zugfenster) *, wodurch Sequenzen $ Input \Rightarrow Output $ aus den Zeitreihen erstellt werden
+So (falls Zugfenster = 3):
 
-- `sigma_t_train`, `delta_epsilon_train` und `delta_sigma_train` werden als **einzelne beschriftete Tensoren** erstellt.  
-- `input_points_combined` kombiniert `sigma_t` und `delta_epsilon` in einem **2D-Tensor** für das Training.  
-- `LabelTensor` erleichtert die Nutzung der Daten in PINA, indem es Variablen klar zuordnet und mit physischen Größen verknüpft.
+$$ [x_ {t-2}, x_ {t-1}, x_t] \rightarrow x_ {t+1}, $$
 
-**Mehr zu `LabelTensor`:**  
-[PINA Documentation – LabelTensor](https://mathlab.github.io/PINA/_rst/label_tensor.html)
-
+Die Eingangssequenzen haben die Länge *train_window* und die Ausgabe hat die Länge 1.
 
 
 ```python
+# Normalize data with MinMax Scaler
+
+X = data[:, :2]  # sigma_t, delta_epsilon
+y = data[:, 2:]  # delta_sigma
+
+scaler_X = MinMaxScaler(feature_range=(-1, 1))
+scaler_y = MinMaxScaler(feature_range=(-1, 1))
+
+X_scaled = scaler_X.fit_transform(X)
+y_scaled = scaler_y.fit_transform(y)
+```
+
+
+```python
+# Convert to Torch Tensor
+# view(-1) is similar to reshape for tensor and the array size is inferred for the -1 dimension
+
+X_tensor = torch.FloatTensor(X_scaled)
+Y_tensor = torch.FloatTensor(y_scaled)
+```
+
+
+```python
+from torch.utils.data import TensorDataset, DataLoader
+
+dataset = TensorDataset(X_tensor.view(-1, 1, 2), Y_tensor.view(-1, 1))
+train_loader = DataLoader(dataset, batch_size=1, shuffle=True)
+```
+
+## LSTM bauen
+
+Sie erhalten die Klasse LSTM. Ein Blick auf die Vorwärtsmethode zeigt, dass der Eingang direkt in LSTM -Module fließt. Die Zahl kann über * num_lstm_layers * und ihre Größe durch verstecktes Dim ermittelt werden. Zusätzlich zum Ausgang haben die LSTM -Module auch einen versteckten Zellzustand. Auf die letzte LSTM -Schicht folgt eine lineare Ausgangsschicht. Beachten Sie, dass wir eine lineare Ausgangsschicht wie in der Regression verwenden, da die Ausgangswerte unbegrenzt sind.
+
+
+```python
+# LSTM architecture
+class LSTM(nn.Module):
+
+    def __init__(self, input_dim, hidden_dim, batch_size, output_dim,
+                    num_layers):
+        super(LSTM, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.batch_size = batch_size
+        self.num_layers = num_layers
+
+        # Define the LSTM layer
+        self.lstm = nn.LSTM(self.input_dim, self.hidden_dim, self.num_layers)
+
+        # Define the output layer
+        self.linear = nn.Linear(self.hidden_dim, output_dim)
+
+    def init_hidden(self):
+        # This is what we'll initialise our hidden state as
+        return (torch.zeros(self.num_layers, self.batch_size, self.hidden_dim),
+                torch.zeros(self.num_layers, self.batch_size, self.hidden_dim))
+
+    def forward(self, input):
+        # Forward pass through LSTM layer
+        # Shape of lstm_out: [input_size, batch_size, hidden_dim]
+        # Shape of self.hidden: (a, b), where a and b both 
+        # Have shape (num_layers, batch_size, hidden_dim).
+        lstm_out, self.hidden = self.lstm(input.view(len(input), self.batch_size, -1))
+        
+        # Only take the output from the final timestep
+        # Can pass on the entirety of lstm_out to the next layer if it is a seq2seq prediction
+        y_pred = self.linear(lstm_out[-1].view(self.batch_size, -1))
+        return y_pred.view(-1)
+```
+
+## LSTM Instanz
+
+
+```python
+# Create an instance of class LSTM
+
+# TODO start**
+input_dim = 2 # Feature dimension of input
+hidden_dim = 32 # Number of hidden neurons in LSTM
+batch_size = 1 # We do not merge the sequences into batches. Therefore the batch_size is 1.
+output_dim = 1 # Feature dimension of output
+num_lstm_layers =  1       
+net = LSTM(input_dim, hidden_dim, batch_size, output_dim, num_lstm_layers)
+```
+
+
+```python
+# Send networks to GPU (if you have one which supports cuda) for faster computations
+
+if device_num>1:
+    print("Let's use", device_num, "GPU's")
+    net = nn.DataParallel(net)
+net.to(device) 
+print(net)
+```
+
+    LSTM(
+      (lstm): LSTM(2, 32)
+      (linear): Linear(in_features=32, out_features=1, bias=True)
+    )
+    
+
+
+```python
+# Specify hyperparameter loss function and optimizer
+# TODO start**
+num_epochs =  200 
+num_learning_rate = 1e-4
+loss_function = nn.MSELoss()
+optimizer = optim.Adam(net.parameters(), lr = num_learning_rate)
+print(net)
+```
+
+    LSTM(
+      (lstm): LSTM(2, 32)
+      (linear): Linear(in_features=32, out_features=1, bias=True)
+    )
+    
+
+## Training
+
+
+```python
+#%% Train the Model
+
+loss_epoch_train = []
+
+for epoch in range(num_epochs):
+    loss_seq_train = []
+
+    for seq, labels in train_loader:
+        seq, labels = seq.to(device), labels.to(device)
+        net.hidden = net.init_hidden()
+
+        optimizer.zero_grad()
+        y_pred_train = net(seq)
+
+        loss = loss_function(y_pred_train, labels.view(-1))
+        if torch.isnan(loss):  # Sicherheitscheck
+            print(f"NaN im Loss bei Epoch {epoch}")
+            continue
+
+        loss.backward()
+        optimizer.step()
+
+        loss_seq_train.append(loss.item())
+
+    if loss_seq_train:
+        loss_epoch_train.append(np.mean(loss_seq_train))
+    else:
+        print(f"Epoch {epoch} hatte keine gültigen Samples.")
+        loss_epoch_train.append(np.nan)
+
+    print(f"Epoch {epoch}/{num_epochs}: Train-Loss: {np.round(loss_epoch_train[-1], 4)}")
+
+plt.figure()
+plt.plot(range(num_epochs), loss_epoch_train, color='r', marker='.', label = 'train-loss')
+plt.legend()
+plt.xlabel('epoch')
+plt.ylabel('loss')
+plt.grid(True)
+plt.savefig('./results/main_lstm_loss.png')
+plt.show()
+```
+
+    Epoch 0/200: Train-Loss: 0.6334
+    Epoch 1/200: Train-Loss: 0.5628
+    Epoch 2/200: Train-Loss: 0.4879
+    Epoch 3/200: Train-Loss: 0.4084
+    Epoch 4/200: Train-Loss: 0.3264
+    Epoch 5/200: Train-Loss: 0.2493
+    Epoch 6/200: Train-Loss: 0.1829
+    Epoch 7/200: Train-Loss: 0.132
+    Epoch 8/200: Train-Loss: 0.0975
+    Epoch 9/200: Train-Loss: 0.0769
+    Epoch 10/200: Train-Loss: 0.0658
+    Epoch 11/200: Train-Loss: 0.06
+    Epoch 12/200: Train-Loss: 0.057
+    Epoch 13/200: Train-Loss: 0.0552
+    Epoch 14/200: Train-Loss: 0.054
+    Epoch 15/200: Train-Loss: 0.0528
+    Epoch 16/200: Train-Loss: 0.0517
+    Epoch 17/200: Train-Loss: 0.0506
+    Epoch 18/200: Train-Loss: 0.0494
+    Epoch 19/200: Train-Loss: 0.0483
+    Epoch 20/200: Train-Loss: 0.0471
+    Epoch 21/200: Train-Loss: 0.046
+    Epoch 22/200: Train-Loss: 0.0448
+    Epoch 23/200: Train-Loss: 0.0436
+    Epoch 24/200: Train-Loss: 0.0424
+    Epoch 25/200: Train-Loss: 0.0413
+    Epoch 26/200: Train-Loss: 0.0401
+    Epoch 27/200: Train-Loss: 0.0388
+    Epoch 28/200: Train-Loss: 0.0376
+    Epoch 29/200: Train-Loss: 0.0364
+    Epoch 30/200: Train-Loss: 0.0353
+    Epoch 31/200: Train-Loss: 0.034
+    Epoch 32/200: Train-Loss: 0.0328
+    Epoch 33/200: Train-Loss: 0.0316
+    Epoch 34/200: Train-Loss: 0.0305
+    Epoch 35/200: Train-Loss: 0.0293
+    Epoch 36/200: Train-Loss: 0.028
+    Epoch 37/200: Train-Loss: 0.0269
+    Epoch 38/200: Train-Loss: 0.0258
+    Epoch 39/200: Train-Loss: 0.0246
+    Epoch 40/200: Train-Loss: 0.0234
+    Epoch 41/200: Train-Loss: 0.0223
+    Epoch 42/200: Train-Loss: 0.0213
+    Epoch 43/200: Train-Loss: 0.0202
+    Epoch 44/200: Train-Loss: 0.0192
+    Epoch 45/200: Train-Loss: 0.0181
+    Epoch 46/200: Train-Loss: 0.0171
+    Epoch 47/200: Train-Loss: 0.0162
+    Epoch 48/200: Train-Loss: 0.0151
+    Epoch 49/200: Train-Loss: 0.0142
+    Epoch 50/200: Train-Loss: 0.0133
+    Epoch 51/200: Train-Loss: 0.0125
+    Epoch 52/200: Train-Loss: 0.0116
+    Epoch 53/200: Train-Loss: 0.0107
+    Epoch 54/200: Train-Loss: 0.01
+    Epoch 55/200: Train-Loss: 0.0092
+    Epoch 56/200: Train-Loss: 0.0085
+    Epoch 57/200: Train-Loss: 0.0078
+    Epoch 58/200: Train-Loss: 0.0072
+    Epoch 59/200: Train-Loss: 0.0065
+    Epoch 60/200: Train-Loss: 0.006
+    Epoch 61/200: Train-Loss: 0.0054
+    Epoch 62/200: Train-Loss: 0.0049
+    Epoch 63/200: Train-Loss: 0.0044
+    Epoch 64/200: Train-Loss: 0.004
+    Epoch 65/200: Train-Loss: 0.0036
+    Epoch 66/200: Train-Loss: 0.0032
+    Epoch 67/200: Train-Loss: 0.0028
+    Epoch 68/200: Train-Loss: 0.0025
+    Epoch 69/200: Train-Loss: 0.0023
+    Epoch 70/200: Train-Loss: 0.002
+    Epoch 71/200: Train-Loss: 0.0018
+    Epoch 72/200: Train-Loss: 0.0016
+    Epoch 73/200: Train-Loss: 0.0014
+    Epoch 74/200: Train-Loss: 0.0013
+    Epoch 75/200: Train-Loss: 0.0011
+    Epoch 76/200: Train-Loss: 0.001
+    Epoch 77/200: Train-Loss: 0.0009
+    Epoch 78/200: Train-Loss: 0.0008
+    Epoch 79/200: Train-Loss: 0.0008
+    Epoch 80/200: Train-Loss: 0.0007
+    Epoch 81/200: Train-Loss: 0.0007
+    Epoch 82/200: Train-Loss: 0.0006
+    Epoch 83/200: Train-Loss: 0.0006
+    Epoch 84/200: Train-Loss: 0.0006
+    Epoch 85/200: Train-Loss: 0.0006
+    Epoch 86/200: Train-Loss: 0.0005
+    Epoch 87/200: Train-Loss: 0.0005
+    Epoch 88/200: Train-Loss: 0.0005
+    Epoch 89/200: Train-Loss: 0.0005
+    Epoch 90/200: Train-Loss: 0.0005
+    Epoch 91/200: Train-Loss: 0.0005
+    Epoch 92/200: Train-Loss: 0.0005
+    Epoch 93/200: Train-Loss: 0.0005
+    Epoch 94/200: Train-Loss: 0.0005
+    Epoch 95/200: Train-Loss: 0.0004
+    Epoch 96/200: Train-Loss: 0.0004
+    Epoch 97/200: Train-Loss: 0.0004
+    Epoch 98/200: Train-Loss: 0.0004
+    Epoch 99/200: Train-Loss: 0.0004
+    Epoch 100/200: Train-Loss: 0.0004
+    Epoch 101/200: Train-Loss: 0.0004
+    Epoch 102/200: Train-Loss: 0.0004
+    Epoch 103/200: Train-Loss: 0.0004
+    Epoch 104/200: Train-Loss: 0.0004
+    Epoch 105/200: Train-Loss: 0.0004
+    Epoch 106/200: Train-Loss: 0.0004
+    Epoch 107/200: Train-Loss: 0.0004
+    Epoch 108/200: Train-Loss: 0.0004
+    Epoch 109/200: Train-Loss: 0.0004
+    Epoch 110/200: Train-Loss: 0.0003
+    Epoch 111/200: Train-Loss: 0.0003
+    Epoch 112/200: Train-Loss: 0.0003
+    Epoch 113/200: Train-Loss: 0.0003
+    Epoch 114/200: Train-Loss: 0.0003
+    Epoch 115/200: Train-Loss: 0.0003
+    Epoch 116/200: Train-Loss: 0.0003
+    Epoch 117/200: Train-Loss: 0.0003
+    Epoch 118/200: Train-Loss: 0.0003
+    Epoch 119/200: Train-Loss: 0.0003
+    Epoch 120/200: Train-Loss: 0.0003
+    Epoch 121/200: Train-Loss: 0.0003
+    Epoch 122/200: Train-Loss: 0.0003
+    Epoch 123/200: Train-Loss: 0.0003
+    Epoch 124/200: Train-Loss: 0.0002
+    Epoch 125/200: Train-Loss: 0.0002
+    Epoch 126/200: Train-Loss: 0.0002
+    Epoch 127/200: Train-Loss: 0.0002
+    Epoch 128/200: Train-Loss: 0.0002
+    Epoch 129/200: Train-Loss: 0.0002
+    Epoch 130/200: Train-Loss: 0.0002
+    Epoch 131/200: Train-Loss: 0.0002
+    Epoch 132/200: Train-Loss: 0.0002
+    Epoch 133/200: Train-Loss: 0.0002
+    Epoch 134/200: Train-Loss: 0.0002
+    Epoch 135/200: Train-Loss: 0.0002
+    Epoch 136/200: Train-Loss: 0.0002
+    Epoch 137/200: Train-Loss: 0.0002
+    Epoch 138/200: Train-Loss: 0.0002
+    Epoch 139/200: Train-Loss: 0.0002
+    Epoch 140/200: Train-Loss: 0.0002
+    Epoch 141/200: Train-Loss: 0.0002
+    Epoch 142/200: Train-Loss: 0.0001
+    Epoch 143/200: Train-Loss: 0.0001
+    Epoch 144/200: Train-Loss: 0.0001
+    Epoch 145/200: Train-Loss: 0.0001
+    Epoch 146/200: Train-Loss: 0.0001
+    Epoch 147/200: Train-Loss: 0.0001
+    Epoch 148/200: Train-Loss: 0.0001
+    Epoch 149/200: Train-Loss: 0.0001
+    Epoch 150/200: Train-Loss: 0.0001
+    Epoch 151/200: Train-Loss: 0.0001
+    Epoch 152/200: Train-Loss: 0.0001
+    Epoch 153/200: Train-Loss: 0.0001
+    Epoch 154/200: Train-Loss: 0.0001
+    Epoch 155/200: Train-Loss: 0.0001
+    Epoch 156/200: Train-Loss: 0.0001
+    Epoch 157/200: Train-Loss: 0.0001
+    Epoch 158/200: Train-Loss: 0.0001
+    Epoch 159/200: Train-Loss: 0.0001
+    Epoch 160/200: Train-Loss: 0.0001
+    Epoch 161/200: Train-Loss: 0.0001
+    Epoch 162/200: Train-Loss: 0.0001
+    Epoch 163/200: Train-Loss: 0.0001
+    Epoch 164/200: Train-Loss: 0.0001
+    Epoch 165/200: Train-Loss: 0.0001
+    Epoch 166/200: Train-Loss: 0.0001
+    Epoch 167/200: Train-Loss: 0.0001
+    Epoch 168/200: Train-Loss: 0.0001
+    Epoch 169/200: Train-Loss: 0.0001
+    Epoch 170/200: Train-Loss: 0.0001
+    Epoch 171/200: Train-Loss: 0.0001
+    Epoch 172/200: Train-Loss: 0.0001
+    Epoch 173/200: Train-Loss: 0.0001
+    Epoch 174/200: Train-Loss: 0.0001
+    Epoch 175/200: Train-Loss: 0.0001
+    Epoch 176/200: Train-Loss: 0.0001
+    Epoch 177/200: Train-Loss: 0.0001
+    Epoch 178/200: Train-Loss: 0.0001
+    Epoch 179/200: Train-Loss: 0.0
+    Epoch 180/200: Train-Loss: 0.0001
+    Epoch 181/200: Train-Loss: 0.0
+    Epoch 182/200: Train-Loss: 0.0
+    Epoch 183/200: Train-Loss: 0.0001
+    Epoch 184/200: Train-Loss: 0.0
+    Epoch 185/200: Train-Loss: 0.0
+    Epoch 186/200: Train-Loss: 0.0
+    Epoch 187/200: Train-Loss: 0.0
+    Epoch 188/200: Train-Loss: 0.0
+    Epoch 189/200: Train-Loss: 0.0
+    Epoch 190/200: Train-Loss: 0.0
+    Epoch 191/200: Train-Loss: 0.0
+    Epoch 192/200: Train-Loss: 0.0
+    Epoch 193/200: Train-Loss: 0.0
+    Epoch 194/200: Train-Loss: 0.0
+    Epoch 195/200: Train-Loss: 0.0
+    Epoch 196/200: Train-Loss: 0.0
+    Epoch 197/200: Train-Loss: 0.0
+    Epoch 198/200: Train-Loss: 0.0
+    Epoch 199/200: Train-Loss: 0.0
+    
+
+
+    
+![png](README_files/README_24_1.png)
+    
+
+
+## Testing
+
+
+```python
+from torch.utils.data import TensorDataset, DataLoader
+
+# Testdaten (z. B. letzte 10 Samples aus X_scaled und y_scaled)
+X_test_tensor = torch.tensor(X_scaled[-10:], dtype=torch.float32).view(-1, 1, 2)
+y_test_tensor = torch.tensor(y_scaled[-10:], dtype=torch.float32).view(-1, 1)
+
+test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+
+# Vorhersagen sammeln
+predictions_scaled = []
+targets_scaled = []
+
+net.eval()
+with torch.no_grad():
+    for seq, label in test_loader:
+        seq = seq.to(device)
+        net.hidden = net.init_hidden()
+        prediction = net(seq)
+        predictions_scaled.append(prediction.cpu().numpy())
+        targets_scaled.append(label.cpu().numpy())
+
+```
+
+## Rückskalierung (inverse transform)
+
+
+```python
+# Rückskalieren
+predictions = scaler_y.inverse_transform(np.array(predictions_scaled).reshape(-1, 1))
+targets = scaler_y.inverse_transform(np.array(targets_scaled).reshape(-1, 1))
+
+# Ausgabe
+for i, (pred, true) in enumerate(zip(predictions, targets)):
+    print(f"[{i}]  vorhergesagt: {pred[0]:.4f} | tatsächlich: {true[0]:.4f}")
+```
+
+    [0]  vorhergesagt: 2611246.2500 | tatsächlich: 2675113.0000
+    [1]  vorhergesagt: 3155669.0000 | tatsächlich: 3210135.7500
+    [2]  vorhergesagt: 3816243.5000 | tatsächlich: 3852162.7500
+    [3]  vorhergesagt: 4616685.5000 | tatsächlich: 4622595.0000
+    [4]  vorhergesagt: 5583454.0000 | tatsächlich: 5547114.5000
+    [5]  vorhergesagt: 6743765.5000 | tatsächlich: 6656537.5000
+    [6]  vorhergesagt: 8121200.5000 | tatsächlich: 7987844.5000
+    [7]  vorhergesagt: 9727713.0000 | tatsächlich: 9585413.0000
+    [8]  vorhergesagt: 11551527.0000 | tatsächlich: 11502497.0000
+    [9]  vorhergesagt: 13543007.0000 | tatsächlich: 13802996.0000
+    
+
+
+```python
+import numpy as np
 import torch
-from pina.utils import LabelTensor
-from torch import tensor
 
-# Beispiel-Daten
-sigma_t_train = LabelTensor(tensor(data_dict['sigma_t'], dtype=torch.float).unsqueeze(-1),['sigma_t'])
-delta_epsilon_train = LabelTensor(tensor(data_dict['delta_epsilon'], dtype=torch.float).unsqueeze(-1), ['delta_epsilon'])
-delta_sigma_train = LabelTensor(tensor(data_dict['delta_sigma'], dtype=torch.float).unsqueeze(-1), ['delta_sigma'])
+# Gegebene Eingabewerte
+sigma_t = 1.0              # Anfangsspannung
+delta_epsilon = 0.0005     # inkrementelle Dehnung
 
-# Kombinieren der Trainingsdaten (Verwendung von 'np.column_stack' für bessere Performance)
-input_points_combined = LabelTensor(torch.tensor(np.column_stack([data_dict['sigma_t'], data_dict['delta_epsilon']]), dtype=torch.float), ['sigma_t', 'delta_epsilon'])
+# Eingabewerte als NumPy-Array vorbereiten
+X_input = np.array([[sigma_t, delta_epsilon]])
 
-if debug_mode:
-    print('‼️Data Loaded')
-    print(f' sigma_t: {sigma_t_train.size()}')
-    print(f' delta_epsilon: {delta_epsilon_train.shape}')
-    print(f' sigma_t und delta_epsilon combined: {input_points_combined.size()}')
-    print(f' delta_sigma: {delta_sigma_train.shape}')
+# Normalisieren mit trainiertem scaler_X
+X_input_scaled = scaler_X.transform(X_input)
+
+# In Tensor für das Modell umwandeln (seq_len=1, batch_size=1, input_dim=2)
+X_tensor = torch.tensor(X_input_scaled, dtype=torch.float32).view(1, 1, 2).to(device)
+
+# Modellvorhersage ausführen
+net.eval()
+with torch.no_grad():
+    net.hidden = net.init_hidden()
+    delta_sigma_scaled = net(X_tensor).cpu().numpy()
+
+# Rückskalieren des Ergebnisses
+delta_sigma = scaler_y.inverse_transform(delta_sigma_scaled.reshape(-1, 1))
+
+# Ausgabe
+print(f"Vorhergesagtes delta_sigma für sigma_t = {sigma_t} und delta_epsilon = {delta_epsilon}: {delta_sigma[0][0]:.6f}")
 ```
 
-    ‼️Data Loaded
-     sigma_t: torch.Size([100, 1])
-     delta_epsilon: torch.Size([100, 1])
-     sigma_t und delta_epsilon combined: torch.Size([100, 2])
-     delta_sigma: torch.Size([100, 1])
+    Vorhergesagtes delta_sigma für sigma_t = 1.0 und delta_epsilon = 0.0005: 8853.107422
     
-
-### **Definition eines einfachen PINN-Problems in PINA**  
-Dieser Code definiert ein **Physics-Informed Neural Network (PINN)**-Problem mithilfe der PINA-Bibliothek.  
- 
-- **Klassenstruktur (`SimpleODE`)**: Erbt von `AbstractProblem` und spezifiziert die Eingabe- und Ausgabevariablen basierend auf `LabelTensor`.
-    - [PINA-Dokumentation - AbstractProblem](https://mathlab.github.io/PINA/_rst/problem/abstractproblem.html) 
-- **Definitionsbereich (`domain`)**: Der Wertebereich der Eingabevariablen (`sigma_t`, `delta_epsilon`) wird als `CartesianDomain` festgelegt.
-    - **Hinweis:** `domain` muss immer definiert sein, selbst wenn sie nicht direkt zur Datengenerierung verwendet wird.  
-    - [PINA-Dokumentation - CartesianDomain](https://mathlab.github.io/PINA/_rst/geometry/cartesian.html) 
-- **Randbedingungen (`conditions`)**: Die echten Messwerte (`in sigma_t, delta_epsilon` `out delta_sigma_train`) werden als Randbedingung (`Condition`) für das Modell definiert.
-    - [PINA-Dokumentation - Condition](https://mathlab.github.io/PINA/_rst/condition.html) 
-- **"Wahre Lösung" (`truth_solution`)**: Falls erforderlich, kann eine analytische Lösung (hier `torch.exp(...)`) zur Validierung genutzt werden.
-    - **Hinweis:** Funktioniert in unserem Fall nicht, da die Implementierung nicht für reine Input und Outpunkt Punkte implementiert ist.
-    - [PINA-Tutorial - Physics Informed Neural Networks on PINA](https://mathlab.github.io/PINA/_rst/tutorials/tutorial1/tutorial.html) 
-- **Probleminstanz (`problem = SimpleODE()`)**: Erstellt das Problem, das für das Training eines PINN verwendet wird.  
-
 
 
 ```python
-from pina.problem import AbstractProblem
-from pina.geometry import CartesianDomain
-from pina import Condition
 
-
-input_conditions = {'data': Condition(input_points=input_points_combined, output_points=delta_sigma_train),}
-
-
-class SimpleODE(AbstractProblem):
-
-    # Definition der Eingabe- und Ausgabevariablen basierend auf LabelTensor
-    input_variables = input_points_combined.labels
-    output_variables = delta_sigma_train.labels
-
-    # Wertebereich
-    domain = CartesianDomain({'sigma_t': [0, 1], 'delta_epsilon': [0, 1]})  # Wertebereich immer definieren!
-
-    # Definition der Randbedingungen und (hier: nur) vorberechnetet Punkte
-    conditions = input_conditions
-
-    output_pts=delta_sigma_train
-
-    # Methode zur Definition der "wahren Lösung" des Problems
-    def truth_solution(self, pts):
-        return torch.exp(pts.extract(['sigma_t']))
-
-# Problem-Instanz erzeugen
-problem = SimpleODE()
-
-
-
-if debug_mode:
-    # Debugging-Ausgaben
-    print("‼️Geladene Input Variablen: ", problem.input_variables)
-    print("‼️Geladene Output Variablen: ", problem.output_variables)
-    print('‼️Input points:', problem.input_pts)
 ```
-
-    ‼️Geladene Input Variablen:  ['sigma_t', 'delta_epsilon']
-    ‼️Geladene Output Variablen:  ['delta_sigma']
-    ‼️Input points: {'data': LabelTensor([[[1.0000e+00, 5.0000e-04]],
-                 [[1.2000e+00, 5.0000e-04]],
-                 [[1.4400e+00, 5.0000e-04]],
-                 [[1.7280e+00, 5.0000e-04]],
-                 [[2.0736e+00, 5.0000e-04]],
-                 [[2.4883e+00, 5.0000e-04]],
-                 [[2.9860e+00, 5.0000e-04]],
-                 [[3.5832e+00, 5.0000e-04]],
-                 [[4.2998e+00, 5.0000e-04]],
-                 [[5.1598e+00, 5.0000e-04]],
-                 [[6.1917e+00, 5.0000e-04]],
-                 [[7.4301e+00, 5.0000e-04]],
-                 [[8.9161e+00, 5.0000e-04]],
-                 [[1.0699e+01, 5.0000e-04]],
-                 [[1.2839e+01, 5.0000e-04]],
-                 [[1.5407e+01, 5.0000e-04]],
-                 [[1.8488e+01, 5.0000e-04]],
-                 [[2.2186e+01, 5.0000e-04]],
-                 [[2.6623e+01, 5.0000e-04]],
-                 [[3.1948e+01, 5.0000e-04]],
-                 [[3.8338e+01, 5.0000e-04]],
-                 [[4.6005e+01, 5.0000e-04]],
-                 [[5.5206e+01, 5.0000e-04]],
-                 [[6.6247e+01, 5.0000e-04]],
-                 [[7.9497e+01, 5.0000e-04]],
-                 [[9.5396e+01, 5.0000e-04]],
-                 [[1.1448e+02, 5.0000e-04]],
-                 [[1.3737e+02, 5.0000e-04]],
-                 [[1.6484e+02, 5.0000e-04]],
-                 [[1.9781e+02, 5.0000e-04]],
-                 [[2.3738e+02, 5.0000e-04]],
-                 [[2.8485e+02, 5.0000e-04]],
-                 [[3.4182e+02, 5.0000e-04]],
-                 [[4.1019e+02, 5.0000e-04]],
-                 [[4.9222e+02, 5.0000e-04]],
-                 [[5.9067e+02, 5.0000e-04]],
-                 [[7.0880e+02, 5.0000e-04]],
-                 [[8.5056e+02, 5.0000e-04]],
-                 [[1.0207e+03, 5.0000e-04]],
-                 [[1.2248e+03, 5.0000e-04]],
-                 [[1.4698e+03, 5.0000e-04]],
-                 [[1.7637e+03, 5.0000e-04]],
-                 [[2.1165e+03, 5.0000e-04]],
-                 [[2.5398e+03, 5.0000e-04]],
-                 [[3.0477e+03, 5.0000e-04]],
-                 [[3.6573e+03, 5.0000e-04]],
-                 [[4.3887e+03, 5.0000e-04]],
-                 [[5.2665e+03, 5.0000e-04]],
-                 [[6.3197e+03, 5.0000e-04]],
-                 [[7.5837e+03, 5.0000e-04]],
-                 [[9.1004e+03, 5.0000e-04]],
-                 [[1.0921e+04, 5.0000e-04]],
-                 [[1.3105e+04, 5.0000e-04]],
-                 [[1.5726e+04, 5.0000e-04]],
-                 [[1.8871e+04, 5.0000e-04]],
-                 [[2.2645e+04, 5.0000e-04]],
-                 [[2.7174e+04, 5.0000e-04]],
-                 [[3.2609e+04, 5.0000e-04]],
-                 [[3.9130e+04, 5.0000e-04]],
-                 [[4.6956e+04, 5.0000e-04]],
-                 [[5.6348e+04, 5.0000e-04]],
-                 [[6.7617e+04, 5.0000e-04]],
-                 [[8.1140e+04, 5.0000e-04]],
-                 [[9.7369e+04, 5.0000e-04]],
-                 [[1.1684e+05, 5.0000e-04]],
-                 [[1.4021e+05, 5.0000e-04]],
-                 [[1.6825e+05, 5.0000e-04]],
-                 [[2.0190e+05, 5.0000e-04]],
-                 [[2.4228e+05, 5.0000e-04]],
-                 [[2.9074e+05, 5.0000e-04]],
-                 [[3.4889e+05, 5.0000e-04]],
-                 [[4.1867e+05, 5.0000e-04]],
-                 [[5.0240e+05, 5.0000e-04]],
-                 [[6.0288e+05, 5.0000e-04]],
-                 [[7.2346e+05, 5.0000e-04]],
-                 [[8.6815e+05, 5.0000e-04]],
-                 [[1.0418e+06, 5.0000e-04]],
-                 [[1.2501e+06, 5.0000e-04]],
-                 [[1.5002e+06, 5.0000e-04]],
-                 [[1.8002e+06, 5.0000e-04]],
-                 [[2.1602e+06, 5.0000e-04]],
-                 [[2.5923e+06, 5.0000e-04]],
-                 [[3.1107e+06, 5.0000e-04]],
-                 [[3.7329e+06, 5.0000e-04]],
-                 [[4.4794e+06, 5.0000e-04]],
-                 [[5.3753e+06, 5.0000e-04]],
-                 [[6.4504e+06, 5.0000e-04]],
-                 [[7.7405e+06, 5.0000e-04]],
-                 [[9.2886e+06, 5.0000e-04]],
-                 [[1.1146e+07, 5.0000e-04]],
-                 [[1.3376e+07, 5.0000e-04]],
-                 [[1.6051e+07, 5.0000e-04]],
-                 [[1.9261e+07, 5.0000e-04]],
-                 [[2.3113e+07, 5.0000e-04]],
-                 [[2.7736e+07, 5.0000e-04]],
-                 [[3.3283e+07, 5.0000e-04]],
-                 [[3.9939e+07, 5.0000e-04]],
-                 [[4.7927e+07, 5.0000e-04]],
-                 [[5.7512e+07, 5.0000e-04]],
-                 [[6.9015e+07, 5.0000e-04]]])}
-    
-
-## Visualisierung Sampling
-Darstellung Input: `sigma_t` und `delta_epsilon`
-
-
-```python
-from pina import Plotter
-
-pl = Plotter()
-pl.plot_samples(problem=problem, filename=f'./{graph_folder}/{img_visual_sampling}{img_extensions}', variables=['delta_epsilon','sigma_t'])
-display(Markdown('![Result of sampling](' + f'./{graph_folder}/{img_visual_sampling}{img_extensions}' + ')'))
-```
-
-
-![Result of sampling](./graph/visual_sampling.png)
-
-
-# Training eines Physics-Informed Neural Networks (PINN) mit PINA
-
-Dieser Code definiert und trainiert ein **Physics-Informed Neural Network (PINN)** zur Lösung des Problems in PINA.
-
-- **Modell (`FeedForward`)**: Ein neuronales Netz mit drei versteckten Schichten (`[50, 50, 50]`), das mit der ReLU-Aktivierungsfunktion arbeitet.
-- **PINN-Objekt (`PINN`)**: Erstellt das PINN-Modell, das die physikalischen Randbedingungen des Problems berücksichtigt.
-- **TensorBoard-Logger (`TensorBoardLogger`)**: Speichert Trainingsmetriken zur Visualisierung.
-- **Trainer (`Trainer`)**: Führt das Training für 1500 Epochen mit Batch-Größe 10 durch.
-- **Training starten (`trainer.train()`)**: Startet den Optimierungsprozess und protokolliert die Metriken.
-
-Am Ende wird die **finale Loss-Funktion** ausgegeben, um die Trainingsqualität zu bewerten.
-
-**Mehr zu `Trainer`:**  
-[PINA-Dokumentation – Trainer](https://mathlab.github.io/PINA/_rst/trainer.html)
-
-
-
-```python
-from pina import Trainer
-from pina.solvers import PINN
-from pina.model import FeedForward
-from pina.callbacks import MetricTracker
-import torch
-from pytorch_lightning.loggers import TensorBoardLogger  # Import TensorBoard Logger
-
-if debug_mode:
-    print('Debugging Info:')
-    # Überprüfen der Größe der Eingabepunkte und Ausgabepunkte
-    print("‼️Länge der Eingabepunkte (input_pts):", len(problem.input_pts))
-    print("‼️Länge der Ausgabepunkte (output_pts):", len(problem.output_pts))
-
-# Model erstellen
-model = FeedForward(
-    layers=[50, 50, 50],
-    func=torch.nn.ReLU,
-    output_dimensions=len(problem.output_variables),
-    input_dimensions=len(problem.input_variables)
-)
-
-# PINN-Objekt erstellen
-pinn = PINN(problem, model)
-
-# TensorBoard-Logger
-logger = TensorBoardLogger("tensorboard_logs", name="pina_experiment")
-
-# Trainer erstellen mit TensorBoard-Logger
-trainer = Trainer(
-    solver=pinn,
-    max_epochs=1000,
-    callbacks=[MetricTracker()],
-    batch_size=10,
-    accelerator='cpu',
-    logger=logger,
-    enable_model_summary=False,
-)
-
-
-# Training starten
-trainer.train()
-
-print('\nFinale Loss Werte')
-# Inspect final loss
-trainer.logged_metrics
-```
-
-    GPU available: False, used: False
-    
-
-    Debugging Info:
-    ‼️Länge der Eingabepunkte (input_pts): 1
-    ‼️Länge der Ausgabepunkte (output_pts): 100
-    
-
-    TPU available: False, using: 0 TPU cores
-    HPU available: False, using: 0 HPUs
-    C:\Users\hab185\Documents\00_Tim\01_Implementierung\pina_oedometer\venv\Lib\site-packages\pytorch_lightning\loops\fit_loop.py:310: The number of training batches (10) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
-    
-
-
-    Training: |                                                                    | 0/? [00:00<?, ?it/s]
-
-
-    `Trainer.fit` stopped: `max_epochs=1000` reached.
-    
-
-    
-    Finale Loss Werte
-    
-
-
-
-
-    {'data_loss': tensor(0.0457), 'mean_loss': tensor(0.0457)}
-
-
-
-## **Visualisierung der Modellvorhersage für delta_sigma**
-
-Dieser Code erstellt einen **Plot der wahren Werte (`delta_sigma`)** im Vergleich zur **Vorhersage des neuronalen Netzwerks**.
-
-- **Datenvorbereitung (`input_data`)**: Die Eingabedaten (`sigma_t` und `delta_epsilon`) werden als `LabelTensor` für das trainierte Modell erstellt.
-- **Modellvorhersage (`pinn(input_data)`)**: Das trainierte PINN-Modell gibt eine Prognose für `delta_sigma` aus.
-- **Plot-Erstellung mit `matplotlib`**:  
-  - Die wahre Lösung (`delta_sigma`) wird als **blaue gestrichelte Linie** dargestellt.  
-  - Die Vorhersage des neuronalen Netzwerks wird als **rote durchgezogene Linie** geplottet.  
-
-**Zusätzlicher Schritt:**  
-Die Nutzung von `matplotlib` war notwendig, da die interne Plot-Funktion von PINA `pl.plot()` das Diagramm nicht wie in den Tutorials erwartungsgemäß generierte, selbst wenn `delta_epsilon` auf einen fixen Wert gesetzt wurde. Dies könnte auf eine fehlerhafte Nutzung der Funktion oder auf eine Inkompatibilität in der Darstellung zurückzuführen sein.
-
-
-```python
-display_data_loss_table(data_dict=data_dict, delta_sigma_pred=pinn(input_points_combined).detach().numpy(), max_i=20)
-plot_prediction_vs_true_solution(pinn=pinn, data_dict=data_dict, graph_folder=graph_folder, img_visual_prediction_vs_truesolution=img_visual_prediction_vs_truesolution, 
-                                     img_extensions=img_extensions, y_axis='total_epsilon', max_i=20)
-```
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
-|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
-| 0 | 0 | 0.0005 | 1.0 | 0.2 | 0.2039 | -0.0039 |
-| 1 | 0.0005 | 0.0005 | 1.2 | 0.24 | 0.2398 | 0.0002 |
-| 2 | 0.001 | 0.0005 | 1.44 | 0.288 | 0.2866 | 0.0014 |
-| 3 | 0.0015 | 0.0005 | 1.728 | 0.3456 | 0.3468 | -0.0012 |
-| 4 | 0.002 | 0.0005 | 2.0736 | 0.4147 | 0.4174 | -0.0027 |
-| 5 | 0.0025 | 0.0005 | 2.4883 | 0.4977 | 0.4939 | 0.0038 |
-| 6 | 0.003 | 0.0005 | 2.986 | 0.5972 | 0.5999 | -0.0026 |
-| 7 | 0.0035 | 0.0005 | 3.5832 | 0.7166 | 0.7193 | -0.0027 |
-| 8 | 0.004 | 0.0005 | 4.2998 | 0.86 | 0.8565 | 0.0035 |
-| 9 | 0.0045 | 0.0005 | 5.1598 | 1.032 | 1.0318 | 0.0002 |
-| 10 | 0.005 | 0.0005 | 6.1917 | 1.2383 | 1.2374 | 0.001 |
-| 11 | 0.0055 | 0.0005 | 7.4301 | 1.486 | 1.482 | 0.004 |
-| 12 | 0.006 | 0.0005 | 8.9161 | 1.7832 | 1.7763 | 0.0069 |
-| 13 | 0.0065 | 0.0005 | 10.6993 | 2.1399 | 2.1297 | 0.0102 |
-| 14 | 0.007 | 0.0005 | 12.8392 | 2.5678 | 2.5749 | -0.007 |
-| 15 | 0.0075 | 0.0005 | 15.407 | 3.0814 | 3.1103 | -0.0288 |
-| 16 | 0.008 | 0.0005 | 18.4884 | 3.6977 | 3.7463 | -0.0486 |
-| 17 | 0.0085 | 0.0005 | 22.1861 | 4.4372 | 4.5096 | -0.0724 |
-| 18 | 0.009 | 0.0005 | 26.6233 | 5.3247 | 5.4207 | -0.096 |
-| 19 | 0.0095 | 0.0005 | 31.948 | 6.3896 | 6.5035 | -0.1139 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
-## Visualisierung Error-Result
-
-
-```python
-pl.plot(solver=pinn, filename=f'./{graph_folder}/{img_nn_result_error}{img_extensions}')
-display(Markdown('![NN Error result](' + f'./{graph_folder}/{img_nn_result_error}{img_extensions}' + ')'))
-```
-
-
-![NN Error result](./graph/img_nn_result_error.png)
-
-
-## Visualisierung Loss-Kurve
-
-
-
-```python
-# plotting the solution
-pl.plot_loss(trainer, label='mean_loss', logy=True, filename=f'./{graph_folder}/{img_visual_loss}{img_extensions}')
-display(Markdown('![Loss Kurve](' + f'./{graph_folder}/{img_visual_loss}{img_extensions}' + ')'))
-```
-
-
-![Loss Kurve](./graph/visual_loss.png)
-
-
-# Testdaten (1 Input-Wert) $\Delta\epsilon=0,0005$
-
-
-```python
-new_data = extract_excel(file_path="files/oedometer/oedo_trainingsdata_compare.xlsx", sheet_name="Res", selected_columns=[1, 2, 3, 5], row_start_range=0)
-
-# Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
-input_data = LabelTensor(torch.tensor(
-    np.column_stack((new_data['sigma_t'], new_data['delta_epsilon'])), dtype=torch.float
-), ['sigma_t', 'delta_epsilon'])
-
-display_data_loss_table(data_dict=new_data, delta_sigma_pred=pinn(input_data).detach().numpy(), max_i=20)
-plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=graph_folder, img_visual_prediction_vs_truesolution=img_visual_prediction_vs_truesolution_comp0, 
-                                     img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
-```
-
-    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          dtype=int64), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([300,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-             0,   0,   0,   0,   0,   0,   0], dtype=int64)}
-    
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
-|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
-| 0 | 0 | 0.0005 | 1500 | 300 | 300.1602 | -0.1602 |
-| 1 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 2 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 3 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 4 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 5 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 6 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 7 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 8 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 9 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 10 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 11 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 12 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 13 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 14 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 15 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 16 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 17 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 18 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-| 19 | 0 | 0.0 | 0 | 0 | 0.0794 | -0.0794 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp0.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
-# Testwerte (2 Input-Wert) $\Delta\epsilon=0,0005$
-
-
-```python
-new_data = extract_excel(file_path="files/oedometer/oedo_trainingsdata_compare2.xlsx", sheet_name="Res", selected_columns=[1, 2, 3, 5], row_start_range=0)
-
-# Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
-input_data = LabelTensor(torch.tensor(
-    np.column_stack((new_data['sigma_t'], new_data['delta_epsilon'])), dtype=torch.float
-), ['sigma_t', 'delta_epsilon'])
-
-display_data_loss_table(data_dict=new_data, delta_sigma_pred=pinn(input_data).detach().numpy(), max_i=20)
-plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=graph_folder, img_visual_prediction_vs_truesolution=img_visual_prediction_vs_truesolution_comp1, 
-                                     img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
-```
-
-    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
-              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          dtype=int64), 'delta_epsilon': array([0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([300. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-           170.8,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-             0. ,   0. ])}
-    
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
-|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
-| 0 | 0 | 0.0005 | 1500 | 300.0 | 300.1602 | -0.1602 |
-| 1 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 2 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 3 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 4 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 5 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 6 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 7 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 8 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 9 | 0 | 0.0005 | 854 | 170.8 | 170.9602 | -0.1602 |
-| 10 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 11 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 12 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 13 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 14 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 15 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 16 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 17 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 18 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 19 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp1.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
-# Testwerte (2 Input-Wert) $\Delta\epsilon=0,001$
-
-
-```python
-new_data = extract_excel(file_path="files/oedometer/oedo_trainingsdata_compare3.xlsx", sheet_name="Res", selected_columns=[1, 2, 3, 5], row_start_range=0)
-
-# Erstelle die Eingabedaten als LabelTensor für das trainierte Modell
-input_data = LabelTensor(torch.tensor(
-    np.column_stack((new_data['sigma_t'], new_data['delta_epsilon'])), dtype=torch.float
-), ['sigma_t', 'delta_epsilon'])
-
-display_data_loss_table(data_dict=new_data, delta_sigma_pred=pinn(input_data).detach().numpy(), max_i=20)
-plot_prediction_vs_true_solution(pinn=pinn, data_dict=new_data, graph_folder=graph_folder, img_visual_prediction_vs_truesolution=img_visual_prediction_vs_truesolution_comp2, 
-                                     img_extensions=img_extensions, y_axis='total_epsilon', max_i=20, plot_type="scatter")
-```
-
-    {'sigma_t': array([1500,    0,    0,    0,    0,    0,    0,    0,    0,  854,    0,
-              0,    0,    0,    0,    0,    0,    0,    0,    0], dtype=int64), 'total_epsilon': array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-          dtype=int64), 'delta_epsilon': array([0.001 , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.0005, 0.    , 0.    , 0.    , 0.    , 0.    , 0.    ,
-           0.    , 0.    , 0.    , 0.    ]), 'delta_sigma': array([600. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-           341.6,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,   0. ,
-             0. ,   0. ])}
-    
-
-
-### Data-Loss bis sigma_19
-
-| Index | total_epsilon | delta_epsilon | sigma_t | True delta_sigma | Predicted delta_sigma | Test-Loss (True - Predicted) |
-|--|--------------|--------------|--------|-----------------|----------------------|-----------------------------|
-| 0 | 0 | 0.001 | 1500 | 600.0 | 300.1602 | 299.8398 |
-| 1 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 2 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 3 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 4 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 5 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 6 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 7 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 8 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 9 | 0 | 0.0005 | 854 | 341.6 | 170.9602 | 170.6398 |
-| 10 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 11 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 12 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 13 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 14 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 15 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 16 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 17 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 18 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-| 19 | 0 | 0.0 | 0 | 0.0 | 0.0794 | -0.0794 |
-
-
-
-
-![Prediction vs True Solution](./graph/visual_prediction-vs-truesolution_comp2.png)<br>**Hinweis:** Datenpunkte liegen sehr nahe beieinander.
-
-
-Gemäß statischem Trainingswert für $\Delta\epsilon$ wurde keine korrekte Prognose vorgenommen.
