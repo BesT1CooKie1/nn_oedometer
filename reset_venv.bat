@@ -54,7 +54,4 @@ if exist requirements.txt (
 ) else (
     echo [WARNUNG] requirements.txt wurde nicht gefunden. Fahre ohne fort.
 )
-
-echo Starte Jupyter Lab...
-jupyter lab
-endlocal
+pause

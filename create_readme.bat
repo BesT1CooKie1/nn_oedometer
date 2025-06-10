@@ -20,6 +20,8 @@ if not defined selected_file (
 )
 
 echo Konvertiere "!selected_file!" nach README.md...
+
+REM Virtuelle Umgebung aktivieren (falls du eine venv hast, passe den Pfad an)
 call venv\Scripts\activate.bat
 jupyter nbconvert "!selected_file!" --to markdown --output README.md
 
