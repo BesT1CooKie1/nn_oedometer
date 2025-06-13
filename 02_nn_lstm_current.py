@@ -1,31 +1,39 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # LSTM OEDOMETER
-# ## Load modules & Check PyTorch
+# # LSTM Model for Oedometer Data Prediction
+# This code implements an LSTM model to predict future values based on time-series data for a geotechnical engineering problem. The goal is to predict delta_sigma values from the given inputs sigma_t (stress) and delta_epsilon (strain). Below are the code blocks with explanations.
+# 
+# 
+# ---
+# 
+# 
+# ## Importing Necessary Libraries
 
-# In[1]:
+# In[ ]:
 
 
-# Import modules
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from IPython.display import Markdown, display
-
 import pandas as pd
-
-# data processing
 import random as r
 from sys import exit
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-# ## Parameters
+# This section imports all the necessary libraries, including PyTorch, pandas, and matplotlib, which are used for neural network operations, data handling, and visualization.
+# 
+# 
+# ---
+# 
+# 
+# ## Setting Parameters
 
-# In[2]:
+# In[ ]:
 
 
 # Debugger: Aktiviert
@@ -33,9 +41,18 @@ debug_mode = True
 normalize = True
 
 
-# ## Preloaded Modules
+# Here, we define two key parameters:
+# 
+# *   `debug_mode`: Used to toggle debugging functionalities.
+# *   `normalize`: A flag to enable or disable data normalization.
+# 
+# 
+# ---
+# 
+# 
+# ## Preloaded Helper Functions
 
-# In[3]:
+# In[ ]:
 
 
 def dict_to_markdown_table(data: dict, title: str = "Datenübersicht", include_index: bool = True, round_digits: int = 4):
@@ -139,9 +156,15 @@ def display_data_loss_table(data_dict, delta_sigma_pred, max_i):
     display(dict_to_markdown_table(data_loss_table, title=f"Data-Loss bis sigma_{min_len-1}", include_index=True))
 
 
+# This function converts a dictionary of lists into a Markdown table for easy visualization in Jupyter Notebooks. It helps in presenting data in a clear and structured way during debugging and analysis.
+# 
+# 
+# ---
+# 
+# 
 # ## Check for use of CONDA if available
 
-# In[4]:
+# In[ ]:
 
 
 use_cuda = torch.cuda.is_available()
@@ -155,13 +178,14 @@ else:
     print('Device:', device, '-- Number of devices:', device_num)
 
 
-# # Recurrent Neural Networks
 # 
-# Just as people do not have to think again each time about the things they have already learned, it is also possible to teach neural networks to recall knowledge they were being taught. This is done in so-called Recurrent Neural Networks (RNNs) with loops inside, which allow information to be retained. Currently the most used architectures of RNNs are Long short-term memory (LSTM) networks. LSTMs are RNNs that overcome the problem of long-term dependencies and thus have achieved the most state-of-the-art results in this area. In this exercise we will look at how to use LSTMs to predict future values using time series data sets.
+# 
+# ---
+# 
+# 
+# ## Defining the Oedometer Class
 
-# ## Data processing
-
-# In[5]:
+# In[ ]:
 
 
 import random
@@ -243,7 +267,15 @@ def plot_input():
     plt.show()
 
 
-# In[6]:
+# The `Oedometer` class simulates the calculation of `delta_sigma` values based on various material parameters such as `sigma_t` (stress), `delta_epsilon` (strain), and others. The class provides methods to adjust list lengths and perform calculations that simulate geotechnical behavior.
+# 
+# 
+# ---
+# 
+# 
+# ## Data Generation and Processing
+
+# In[ ]:
 
 
 i = 1000
@@ -274,7 +306,14 @@ print('Anzahl Elemente sigma_t: ' + str(len(sigma_t)))
 print('Anzahl Elemente delta_sigma: ' + str(len(delta_sigma)))
 
 
-# In[7]:
+# This part generates synthetic data for `sigma_t` (stress) and `delta_epsilon` (strain) to simulate the inputs. The class Oedometer is used to compute `delta_sigma` values from the generated data.
+# 
+# ---
+# 
+# 
+# ## Visualizing the Data
+
+# In[ ]:
 
 
 data = {
@@ -289,7 +328,15 @@ display(Markdown('### RawData'))
 display(Markdown(df.to_markdown()))
 
 
-# In[8]:
+# Here, the raw data is converted into a pandas DataFrame and displayed as a Markdown table. This allows for easy inspection of the data before feeding it into the LSTM model.
+# 
+# 
+# ---
+# 
+# 
+# ## Data Normalization
+
+# In[ ]:
 
 
 min_val = None
@@ -318,16 +365,16 @@ def min_max_denormalize(tensor):
   return tensor * (max_val - min_val) + min_val
 
 
-# ### Warum nur der Input skaliert wird
+# This function normalizes input tensors using the Min-Max scaling method. Normalization helps in improving the training stability by ensuring that all features are within the same scale.
 # 
-# In der Regel wird nur der **Input** normalisiert, weil der **Output** oft als das Ziel betrachtet wird, das das Modell vorhersagen soll. Das Ziel soll in der gleichen Skala und den gleichen Einheiten bleiben, um eine einfache Interpretation und Rücktransformation der Vorhersagen zu ermöglichen. Wenn der Output normalisiert wird, muss er nach der Vorhersage wieder denormalisiert werden, was zusätzliche Komplexität verursacht.
 # 
-# Die Eingabedaten haben häufig eine sehr unterschiedliche Skala, und die Normalisierung stellt sicher, dass alle Eingabefeatures im gleichen Bereich liegen, was das Training des Modells stabiler und effizienter macht.
+# ---
 # 
-# > **StackOverflow:**
-# > - [Stack Overflow Neural Networks normalizing output data](https://stackoverflow.com/questions/42604261/neural-networks-normalizing-output-data)
+# ## Creating the Dataset for LSTM
+# 
+# 
 
-# In[9]:
+# In[ ]:
 
 
 def create_dataset(df, lookback=1, input_columns=None, output_columns=None, normalize=True):
@@ -377,7 +424,9 @@ def create_dataset(df, lookback=1, input_columns=None, output_columns=None, norm
 X, y = create_dataset(df, lookback=1, normalize=normalize, input_columns=['sigma_t', 'delta_epsilon'], output_columns=['delta_sigma'])
 
 
-# In[10]:
+# This function creates the input-output pairs for the LSTM model. The `lookback` parameter determines how many previous time steps are used to predict the next value. The function normalizes the input data if the `normalize` flag is set to `True`.
+
+# In[ ]:
 
 
 # --- Aufteilen in Training (2/3) und Test (1/3) ---
@@ -392,36 +441,9 @@ print("  X_train:", X_train.shape, "y_train:", y_train.shape)
 print("  X_test: ", X_test.shape,  "y_test: ", y_test.shape)
 
 
-# ### Warum der erste Output-Wert im Trainingsdatensatz "fehlt"
 # 
-# Bei der Vorbereitung von Zeitreihendaten für ein Long Short-Term Memory (LSTM) Modell, insbesondere wenn ein `lookback`-Wert größer als Null verwendet wird, gibt es eine wichtige Besonderheit bezüglich des ersten Elements im Ziel-Datensatz (`y`).
-# 
-# **Die Logik von `create_dataset`:**
-# 
-# Unsere `create_dataset` Funktion erstellt Paare von Input-Sequenzen (`X`) und den entsprechenden zukünftigen Zielwerten (`y`). Bei einem `lookback` von $N$:
-# 
-# *   Der **Input** für das $i$-te Trainingsbeispiel (`X[i]`) besteht aus den Daten der letzten $N$ Zeitschritte (von Index $i$ bis $i + N - 1$ im ursprünglichen DataFrame).
-# *   Der **Output** für das $i$-te Trainingsbeispiel (`y[i]`) ist der Wert des darauf folgenden Zeitschritts (am Index $i + N$ im ursprünglichen DataFrame).
-# 
-# **Der Effekt des `lookback`:**
-# 
-# Betrachten wir den Fall mit `lookback = 1` (wie in unserem Notebook):
-# 
-# *   Das erste Trainingsbeispiel (`i=0`) hat als Input die Daten von Index 0 im Original-DataFrame und als Output die Daten von Index 1.
-# *   Das zweite Trainingsbeispiel (`i=1`) hat als Input die Daten von Index 1 im Original-DataFrame und als Output die Daten von Index 2.
-# *   Und so weiter, bis zum letzten möglichen Paar.
-# 
-# **Warum der erste Wert im Originaldatensatz übersprungen wird:**
-# 
-# Der allererste Wert im ursprünglichen DataFrame (am Index 0) kann nicht als Zielwert (`y`) für das erste Trainingsbeispiel verwendet werden, weil es keine vorherigen Daten gibt (bei einem `lookback > 0`), die als Input-Sequenz dienen könnten, um diesen Wert vorherzusagen.
-# 
-# **Zusammenfassend:**
-# 
-# Wenn `lookback > 0` ist, werden die ersten `lookback` Elemente des ursprünglichen DataFrames nicht als Zielwerte (`y`) in den vom `create_dataset` erzeugten Tensoren erscheinen. Dies ist kein Fehler, sondern eine notwendige Konsequenz der Vorbereitung von Zeitreihendaten für ein sequenzbasiertes Modell wie ein LSTM, das eine Vergangenheit benötigt, um die Zukunft vorherzusagen.
-# 
-# Die Tabellen zur Denormalisierungsüberprüfung zeigen diese Logik durch die Spalten "Input Rohdaten Index" und "Output Rohdaten Index", die die genaue Position der Daten im ursprünglichen Datensatz referenzieren.
 
-# In[11]:
+# In[ ]:
 
 
 num_rows = 10  # Anzahl der Zeilen, die in den Tabellen angezeigt werden sollen
@@ -496,7 +518,12 @@ display(dict_to_markdown_table({
     }, title="Trainingsdaten (Denormalisiert) mit Checks", include_index=True))
 
 
-# In[12]:
+# ---
+# 
+# 
+# ## LSTM Model Definition
+
+# In[ ]:
 
 
 import torch.nn as nn
@@ -513,7 +540,11 @@ class LSTMModel(nn.Module):
         return out
 
 
-# In[13]:
+# This is the definition of the LSTM model. It uses one LSTM layer followed by a fully connected layer. The model learns from the input sequence and makes a prediction about the output value.
+# 
+# 
+
+# In[ ]:
 
 
 # Hyperparameter
@@ -528,7 +559,14 @@ criterion = torch.nn.MSELoss()  # Mean Squared Error Loss
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
 
-# In[14]:
+# 
+# 
+# ---
+# 
+# 
+# ## Model Training with Early Stopping
+
+# In[ ]:
 
 
 import torch
@@ -613,7 +651,14 @@ for epoch in range(epochs):
             print(f'Epoch {epoch+1}/{epochs}, Train Loss: {avg_train_loss:.6f}')
 
 
-# In[15]:
+# This section implements the training loop with early stopping. Early stopping monitors the validation loss and stops the training process if the loss does not improve after a set number of epochs (`patience`).
+# 
+# 
+# ---
+# 
+# ## Loss Plotting
+
+# In[ ]:
 
 
 import matplotlib.pyplot as plt
@@ -626,7 +671,14 @@ plt.legend()
 plt.show()
 
 
-# In[16]:
+# This code generates a plot of the training loss over epochs. Visualizing the loss curve is important for diagnosing model convergence and training performance.
+# 
+# 
+# ---
+# 
+# ## Residual and Prediction Plots
+
+# In[ ]:
 
 
 import numpy as np
@@ -674,46 +726,40 @@ def plot_pred_vs_real(y_true, y_pred, max_points=None):
     plt.legend()
     plt.show()
 
-def true_vs_pred_plot(y_true, y_pred):
-    plt.figure(figsize=(10,4))
-    plt.plot(target[SEQ_LEN:], label="True")
-    plt.plot(y_pred,           label="Predicted")
-    plt.title("Nicht-lineare Vorhersage (2 Inputs → 1 Output)")
-    plt.legend(); plt.tight_layout(); plt.show()
-
-
 y_true = []
 y_pred = []
 
 model.eval()
 with torch.no_grad():
-    y_pred = model(X_test).cpu().numpy().ravel()
-    y_true     = y_test.cpu().numpy().ravel()
+    y_pred_unsorted = model(X_test).cpu().numpy().ravel()
+    y_true_unsorted     = y_test.cpu().numpy().ravel()
+
+    sorted_indices = np.argsort(y_true_unsorted)
+
+    y_pred = y_pred_unsorted[sorted_indices]
+    y_true = y_true_unsorted[sorted_indices]
 
 print(min_max_denormalize(X_test)[0:10].tolist())
-print(y_true[0:10])
 print(y_pred[0:10])
+print(y_true_[0:10])
 
 
-# In[17]:
+# This function plots the residuals (i.e., the difference between predicted and true values) to check how well the model is fitting the data. A similar function `plot_pred_vs_real` is used to visualize the predicted vs real values.
+# 
+
+# In[ ]:
 
 
 plot_residuals(y_true, y_pred)
 
 
-# In[18]:
+# In[ ]:
 
 
 plot_pred_vs_real(y_true, y_pred)
 
 
 # In[ ]:
-
-
-plot_pred_vs_real_line(y_true, y_pred)
-
-
-# In[36]:
 
 
 data_print = {
@@ -729,7 +775,14 @@ data_print = {
 display(pd.DataFrame(data_print).head(20))
 
 
-# In[37]:
+# 
+# 
+# ---
+# 
+# 
+# ## Final Model Evaluation and Prediction
+
+# In[ ]:
 
 
 def predict_oedometer(model, sigma_t_input, delta_epsilon_input, min_val, max_val, normalize=True):
@@ -818,3 +871,5 @@ display(Markdown(f"""
 | Differenz (Prognose - Wahr) | {difference:.4f}   |
 """))
 
+
+# This final section makes a prediction using the trained LSTM model and compares the predicted value with the true value calculated using the `Oedometer` class. The results are displayed in a Markdown table for easy inspection.
