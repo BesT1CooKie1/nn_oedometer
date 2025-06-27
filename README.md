@@ -157,51 +157,51 @@ pd.DataFrame([list_input, list_output])
   <tbody>
     <tr>
       <th>0</th>
-      <td>25.0</td>
-      <td>47.0</td>
-      <td>1.0</td>
-      <td>3.0</td>
-      <td>6.0</td>
-      <td>36.0</td>
-      <td>37.0</td>
-      <td>15.0</td>
-      <td>37.0</td>
-      <td>6.0</td>
-      <td>...</td>
-      <td>34.0</td>
+      <td>9.0</td>
+      <td>17.0</td>
       <td>45.0</td>
-      <td>37.0</td>
-      <td>12.0</td>
-      <td>13.0</td>
-      <td>11.0</td>
-      <td>34.0</td>
+      <td>25.0</td>
+      <td>24.0</td>
+      <td>29.0</td>
+      <td>35.0</td>
+      <td>15.0</td>
+      <td>40.0</td>
+      <td>46.0</td>
+      <td>...</td>
       <td>2.0</td>
       <td>15.0</td>
+      <td>35.0</td>
+      <td>17.0</td>
+      <td>44.0</td>
+      <td>2.0</td>
       <td>46.0</td>
+      <td>42.0</td>
+      <td>37.0</td>
+      <td>14.0</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>10000.0</td>
-      <td>18800.0</td>
-      <td>400.0</td>
-      <td>1200.0</td>
-      <td>2400.0</td>
-      <td>14400.0</td>
-      <td>14800.0</td>
-      <td>6000.0</td>
-      <td>14800.0</td>
-      <td>2400.0</td>
-      <td>...</td>
-      <td>13600.0</td>
+      <td>3600.0</td>
+      <td>6800.0</td>
       <td>18000.0</td>
-      <td>14800.0</td>
-      <td>4800.0</td>
-      <td>5200.0</td>
-      <td>4400.0</td>
-      <td>13600.0</td>
+      <td>10000.0</td>
+      <td>9600.0</td>
+      <td>11600.0</td>
+      <td>14000.0</td>
+      <td>6000.0</td>
+      <td>16000.0</td>
+      <td>18400.0</td>
+      <td>...</td>
       <td>800.0</td>
       <td>6000.0</td>
+      <td>14000.0</td>
+      <td>6800.0</td>
+      <td>17600.0</td>
+      <td>800.0</td>
       <td>18400.0</td>
+      <td>16800.0</td>
+      <td>14800.0</td>
+      <td>5600.0</td>
     </tr>
   </tbody>
 </table>
@@ -271,6 +271,58 @@ for epoch in range(epochs):
         print(f"Epoch {epoch}: Loss = {loss.item():.6f}")
 ```
 
+    Epoch 0: Loss = 138716960.000000
+    Epoch 100: Loss = 18432360.000000
+    Epoch 200: Loss = 32317.492188
+    Epoch 300: Loss = 29755.869141
+    Epoch 400: Loss = 27378.242188
+    Epoch 500: Loss = 24849.810547
+    Epoch 600: Loss = 22261.812500
+    Epoch 700: Loss = 19689.150391
+    Epoch 800: Loss = 17192.818359
+    Epoch 900: Loss = 14821.009766
+    Epoch 1000: Loss = 12610.442383
+    Epoch 1100: Loss = 10587.031250
+    Epoch 1200: Loss = 8766.829102
+    Epoch 1300: Loss = 7157.091309
+    Epoch 1400: Loss = 5757.470703
+    Epoch 1500: Loss = 4561.178223
+    Epoch 1600: Loss = 3556.290283
+    Epoch 1700: Loss = 2727.079346
+    Epoch 1800: Loss = 2055.189453
+    Epoch 1900: Loss = 1520.990601
+    Epoch 2000: Loss = 1104.481445
+    Epoch 2100: Loss = 786.257324
+    Epoch 2200: Loss = 548.231384
+    Epoch 2300: Loss = 374.015259
+    Epoch 2400: Loss = 249.440506
+    Epoch 2500: Loss = 162.421387
+    Epoch 2600: Loss = 103.151779
+    Epoch 2700: Loss = 63.819149
+    Epoch 2800: Loss = 38.414352
+    Epoch 2900: Loss = 22.462780
+    Epoch 3000: Loss = 12.745688
+    Epoch 3100: Loss = 7.005270
+    Epoch 3200: Loss = 3.724057
+    Epoch 3300: Loss = 1.911139
+    Epoch 3400: Loss = 0.945234
+    Epoch 3500: Loss = 0.449556
+    Epoch 3600: Loss = 0.205142
+    Epoch 3700: Loss = 0.089981
+    Epoch 3800: Loss = 0.037488
+    Epoch 3900: Loss = 0.014909
+    Epoch 4000: Loss = 0.005670
+    Epoch 4100: Loss = 0.002037
+    Epoch 4200: Loss = 0.000709
+    Epoch 4300: Loss = 0.000237
+    Epoch 4400: Loss = 0.000078
+    Epoch 4500: Loss = 0.000025
+    Epoch 4600: Loss = 0.000009
+    Epoch 4700: Loss = 0.000003
+    Epoch 4800: Loss = 0.000001
+    Epoch 4900: Loss = 0.000001
+    
+
 # Loss function
 
 
@@ -278,6 +330,12 @@ for epoch in range(epochs):
 plt.plot(loss_history, label="Loss")
 plt.show()
 ```
+
+
+    
+![png](output_16_0.png)
+    
+
 
 
 ```python
@@ -289,6 +347,9 @@ with torch.no_grad():
 
 print(pred)
 ```
+
+    tensor([[400.0014]])
+    
 
 # Plot of stress–strain curve
 
@@ -337,3 +398,9 @@ def plot_result(iterations=20, start_sigma=1, delta_epsilon=0.0005):
     
 plot_result()
 ```
+
+
+    
+![png](output_19_0.png)
+    
+
