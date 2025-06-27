@@ -4,7 +4,7 @@ chcp 65001 >nul
 cls
 
 REM Setze dein Repository-Pfad
-set REPO_PATH="C:\Users\%USERNAME%\Documents\git_projects\pina_oedometer"
+set REPO_PATH="C:\Users\%USERNAME%\Documents\00_Tim\01_Implementierung\pina_oedometer"
 set BRANCH=master
 
 REM Gehe in das Repository-Verzeichnis
