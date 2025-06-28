@@ -60,7 +60,8 @@ oedo_para = {
 # Load problem and generate  data from 00_problem_settings_functions.ipynb
 
 Available classes: `Oedometer` <br>
-Returns `list_input` and `list_output` as type `list`
+Returns `list_input` and `list_output` as type `list` <br>
+Returns `tensor_input` and `tensor_output` as type `tensor`
 
 
 ```python
@@ -73,8 +74,8 @@ Returns `list_input` and `list_output` as type `list`
 # list_input: list
 # list_output: list
 
-# input_tensor: tensor
-# output_tensor: tensor
+# tensor_input: tensor
+# tensor_output: tensor
 ```
 
 # Show trainingsdata (List) as DataFrame
