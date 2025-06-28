@@ -2,6 +2,7 @@
 __pycache__  
 venv
 files/tutorial*
+.backup
 
 # Bestimmte Dateien ignorieren
 .log  
