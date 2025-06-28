@@ -442,20 +442,6 @@ print('Output: ', problem.output_variables)
 
 # Training eines Physics-Informed Neural Networks (PINN) mit PINA
 
-Dieser Code definiert und trainiert ein **Physics-Informed Neural Network (PINN)** zur Lösung des Problems in PINA.
-
-- **Modell (`FeedForward`)**: Ein neuronales Netz mit drei versteckten Schichten (`[50, 50, 50]`), das mit der ReLU-Aktivierungsfunktion arbeitet.
-- **PINN-Objekt (`PINN`)**: Erstellt das PINN-Modell, das die physikalischen Randbedingungen des Problems berücksichtigt.
-- **TensorBoard-Logger (`TensorBoardLogger`)**: Speichert Trainingsmetriken zur Visualisierung.
-- **Trainer (`Trainer`)**: Führt das Training für 1500 Epochen mit Batch-Größe 10 durch.
-- **Training starten (`trainer.train()`)**: Startet den Optimierungsprozess und protokolliert die Metriken.
-
-Am Ende wird die **finale Loss-Funktion** ausgegeben, um die Trainingsqualität zu bewerten.
-
-**Mehr zu `Trainer`:**  
-[PINA-Dokumentation – Trainer](https://mathlab.github.io/PINA/_rst/trainer.html)
-
-
 
 ```python
 from pina import Trainer
