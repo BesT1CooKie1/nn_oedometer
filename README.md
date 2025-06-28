@@ -1,113 +1,91 @@
-# Import and global variables
+# MODUL PINA
 
+# Vorhersage des Ödometerversuches implementiert
+Ziel war die Implementierung eines neuronalen Netzwerks zur Modellierung des Ödometerversuchs. Dabei wurden gegebene Input-Parameter verarbeitet, um Output-Parameter vorherzusagen. Die physikalischen Rahmenbedingungen wurden zunächst auf Null gesetzt, sodass das Modell ausschließlich auf der KI-basierten Struktur arbeitet, ohne physikalische Optimierungen durch Physical Informed Neural Networks (PINNs).
+<br>
+Diese grundlegende Umsetzung bildet die Basis für weiterführende Optimierungen, wie die Integration physikalischer Gesetzmäßigkeiten, die jedoch nicht Teil des initialen Arbeitsauftrags waren.
 
-```python
-import matplotlib.pyplot as plt
+#### Das Problem ist wie folgt definiert:
+$$
+\begin{array}{rcl}
+    \sigma_{t+1} & = & \sigma_{t}+\Delta\sigma \\ \\
+    \Delta\sigma & = & E_s\cdot \Delta\epsilon \\ 
+    E_s & = & \frac{1+e_0}{C_c} \cdot \sigma_t
+\end{array}
+\hspace{2cm}
+\begin{array}{l}
+    \textbf{Annahmen:} \\ \\
+    \text{Startwert d. Iteration: } \sigma_t = 1,00 \\ 
+    e_0 = 1,00 \\ 
+    C_c = 0,005 \\
+    \Delta\epsilon = 0,0005
+\end{array}
+$$
 
-input_pts_label = "sigma_t"
-output_pts_label = "e_s"
-delta_epsilon=0.0005
-```
+<br> 
 
-# Problem definition
+Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ ; $\Delta\epsilon$ }, `Output` { $\sigma_{t+1}$ }.
+<br>
+### Variablendeklaration
+- $\sigma_t$ = `sigma_t`
+- $\Delta\epsilon$ = `delta_epsilon`
+- $\sigma_{t+1}$ = `delta_sigma
+- $E_s$ = `e_s`
 
-
-```python
-import random
-
-class Oedometer:
-    def __init__(self, e_0: float = 1.00, C_c: float = 0.005, delta_epsilon: float = 0.0005,
-                 sigma_t: float = 1.00, max_n: int = 50, rand_epsilon:bool=False, **kwargs):
-        self.max_n = max_n
-
-        # Standardwerte als Listen setzen
-        self.e_0 = [e_0]
-        self.C_c = [C_c]
-        self.sigma_t = [sigma_t]
-        self.delta_epsilon = []
-        self.total_epsilon = [0]
-
-        # Initiale Listen für Berechnungen
-        self.sigma_t = [sigma_t]
-        self.delta_sigma = []
-        self.e_s = []
-        self.delta_epsilon = [delta_epsilon]
-
-        # Dynamische Zuweisung von kwargs, falls vorhanden
-        for key, value in kwargs.items():
-            if hasattr(self, key):  # Nur vorhandene Attribute setzen
-                setattr(self, key, [value])
-
-        # Berechnungen durchführen
-        self.__calc_sigma_t_p1()
-
-        # Listenlängen anpassen
-        self.__adjust_list_lengths()
-        self.__calc_total_epsilon()
-
-    def __adjust_list_lengths(self):
-        """ Passt ALLE Listen-Attribute an `max_n` an. """
-        attributes = ['e_0', 'C_c', 'delta_epsilon', 'sigma_t', 'sigma_t', 'delta_sigma', 'e_s']
-        for attr in attributes:
-            value_list = getattr(self, attr, [])
-            current_length = len(value_list)
-
-            if current_length > self.max_n:
-                setattr(self, attr, value_list[:self.max_n])  # Kürzen
-            elif current_length < self.max_n:
-                setattr(self, attr, value_list + [value_list[-1] if value_list else 0] * (self.max_n - current_length))  # Auffüllen
-
-    def __calc_total_epsilon(self):
-        for i in range(len(self.delta_epsilon)-1):
-            self.total_epsilon.append(self.total_epsilon[i] + self.delta_epsilon[i])
-
-    def __calc_e_s(self, sigma_t):
-        """ Berechnet `e_s` aus `sigma_t`. """
-        e_s = (1 + self.e_0[0]) / self.C_c[0] * sigma_t
-        self.e_s.append(e_s)
-        return e_s
-
-    def __calc_sigma_t_p1(self):
-        """ Berechnet `sigma_t` und `delta_sigma` für die nächsten Schritte. """
-        for i in range(self.max_n):  # -1, weil sigma_t bereits gesetzt ist
-            e_s = self.__calc_e_s(self.sigma_t[i])
-            delta_sigma = e_s * self.delta_epsilon[0]
-            sigma = self.sigma_t[i] + delta_sigma
-            self.sigma_t.append(sigma)
-            self.delta_sigma.append(delta_sigma)
-```
-
-# Generate random trainingsdata
+# Generating random trainings data
 
 
 ```python
 from random import randint
 
+# Define input and output parameters
+input_str = "sigma_t"
+output_str = "e_s"
+
+# Defining problem parameters
+delta_epsilon=0.0005
+C_c = 0.005
+e_0 = 1.0
+amount_trainings_data = 100
+
+# Data preparation for 
 oedo_para = {
-    'max_n': 100,
-    'e_0': 1.0,
-    'C_c': 0.005,
+    'max_n': 1,
+    'e_0': e_0,
+    'C_c': C_c,
     'delta_epsilon' : delta_epsilon,
 }
-list_output = []
-list_input = []
-n = oedo_para['max_n']
-oedo_para['max_n'] = 1
-for i in range(n):
-    oedo_para['sigma_t'] = randint(1,50)
-    oedo_output = Oedometer(**oedo_para)
-    list_output.append(oedo_output.e_s[0])
-    list_input.append(oedo_output.sigma_t[0])
 ```
 
-# Show trainingsdata
+# Load problem and generate  data from 00_problem_settings_functions.ipynb
+
+Available classes: `Oedometer` <br>
+Returns `list_input` and `list_output` as type `list`
+
+
+```python
+%run 00_problem_settings_functions.ipynb
+
+# Loads:
+# Oedometer class
+
+# Returns
+# list_input: list
+# list_output: list
+
+# input_tensor: tensor
+# output_tensor: tensor
+```
+
+# Show trainingsdata (List) as DataFrame
+Type `list`: `list_input` and `list_output`
 
 
 ```python
 import pandas as pd
 from pandas import DataFrame
 
-pd.DataFrame([list_input, list_output])
+pd.DataFrame([[input_str] + list_input, [output_str] + list_output])
 ```
 
 
@@ -142,7 +120,6 @@ pd.DataFrame([list_input, list_output])
       <th>8</th>
       <th>9</th>
       <th>...</th>
-      <th>90</th>
       <th>91</th>
       <th>92</th>
       <th>93</th>
@@ -152,204 +129,416 @@ pd.DataFrame([list_input, list_output])
       <th>97</th>
       <th>98</th>
       <th>99</th>
+      <th>100</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>9.0</td>
-      <td>17.0</td>
-      <td>45.0</td>
-      <td>25.0</td>
+      <td>sigma_t</td>
+      <td>8.0</td>
       <td>24.0</td>
-      <td>29.0</td>
-      <td>35.0</td>
-      <td>15.0</td>
-      <td>40.0</td>
-      <td>46.0</td>
-      <td>...</td>
-      <td>2.0</td>
-      <td>15.0</td>
-      <td>35.0</td>
-      <td>17.0</td>
-      <td>44.0</td>
-      <td>2.0</td>
-      <td>46.0</td>
-      <td>42.0</td>
       <td>37.0</td>
-      <td>14.0</td>
+      <td>40.0</td>
+      <td>43.0</td>
+      <td>8.0</td>
+      <td>25.0</td>
+      <td>47.0</td>
+      <td>47.0</td>
+      <td>...</td>
+      <td>16.0</td>
+      <td>23.0</td>
+      <td>40.0</td>
+      <td>36.0</td>
+      <td>25.0</td>
+      <td>41.0</td>
+      <td>9.0</td>
+      <td>23.0</td>
+      <td>17.0</td>
+      <td>18.0</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>3600.0</td>
-      <td>6800.0</td>
-      <td>18000.0</td>
-      <td>10000.0</td>
+      <td>e_s</td>
+      <td>3200.0</td>
       <td>9600.0</td>
-      <td>11600.0</td>
-      <td>14000.0</td>
-      <td>6000.0</td>
-      <td>16000.0</td>
-      <td>18400.0</td>
-      <td>...</td>
-      <td>800.0</td>
-      <td>6000.0</td>
-      <td>14000.0</td>
-      <td>6800.0</td>
-      <td>17600.0</td>
-      <td>800.0</td>
-      <td>18400.0</td>
-      <td>16800.0</td>
       <td>14800.0</td>
-      <td>5600.0</td>
+      <td>16000.0</td>
+      <td>17200.0</td>
+      <td>3200.0</td>
+      <td>10000.0</td>
+      <td>18800.0</td>
+      <td>18800.0</td>
+      <td>...</td>
+      <td>6400.0</td>
+      <td>9200.0</td>
+      <td>16000.0</td>
+      <td>14400.0</td>
+      <td>10000.0</td>
+      <td>16400.0</td>
+      <td>3600.0</td>
+      <td>9200.0</td>
+      <td>6800.0</td>
+      <td>7200.0</td>
     </tr>
   </tbody>
 </table>
-<p>2 rows × 100 columns</p>
+<p>2 rows × 101 columns</p>
 </div>
 
 
 
-# Convert list to tensor
+# Show trainingsdata (Tensor) as DataFrame
+Type `tensor`: `tensor_input` and `tensor_output`
 
 
 ```python
-from torch import tensor
-import torch
-
-sigma_t_tensor = torch.tensor(list_input, dtype=torch.float).unsqueeze(-1)
-e_s_tensor = torch.tensor(list_output, dtype=torch.float).unsqueeze(-1)
+tensor_data_df = pd.DataFrame(torch.cat((tensor_input, tensor_output), dim=1), columns = [input_str, output_str])
+tensor_data_df
 ```
 
-# Einfaches Feedforward-Netz
 
-# Define SimpleRegressor Model
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sigma_t</th>
+      <th>e_s</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>8.0</td>
+      <td>3200.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>24.0</td>
+      <td>9600.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>37.0</td>
+      <td>14800.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>40.0</td>
+      <td>16000.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>43.0</td>
+      <td>17200.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>95</th>
+      <td>41.0</td>
+      <td>16400.0</td>
+    </tr>
+    <tr>
+      <th>96</th>
+      <td>9.0</td>
+      <td>3600.0</td>
+    </tr>
+    <tr>
+      <th>97</th>
+      <td>23.0</td>
+      <td>9200.0</td>
+    </tr>
+    <tr>
+      <th>98</th>
+      <td>17.0</td>
+      <td>6800.0</td>
+    </tr>
+    <tr>
+      <th>99</th>
+      <td>18.0</td>
+      <td>7200.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>100 rows × 2 columns</p>
+</div>
+
+
+
+## Tensor to LabelTensor for PINA
 
 
 ```python
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import matplotlib.pyplot as plt
+from pina.utils import LabelTensor
 
-class SimpleRegressor(nn.Module):
-    def __init__(self):
-        super(SimpleRegressor, self).__init__()
-        self.model = nn.Sequential(
-            nn.Linear(1, 16),
-            nn.ReLU(),
-            nn.Linear(16, 16),
-            nn.ReLU(),
-            nn.Linear(16, 1)
-        )
-
-    def forward(self, x):
-        return self.model(x)
-
-model = SimpleRegressor()
+label_tensor_input = LabelTensor(tensor_input,[input_str])
+label_tensor_output = LabelTensor(tensor_output, [output_str])
 ```
 
-# Training
+# Show trainingsdata (LabelTensor) as DataFrame
+Type `LabelTensor`: `label_tensor_input` and `label_tensor_output`
 
 
 ```python
-loss_fn = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.01)
+tensor_input_df = pd.DataFrame(torch.cat((label_tensor_input, label_tensor_output), dim=1), columns = [input_str, output_str])
 
-epochs = 5000
-loss_history = []
-for epoch in range(epochs):
-    model.train()
-    optimizer.zero_grad()
-    pred = model(sigma_t_tensor)
-    loss = loss_fn(pred, e_s_tensor)
-    loss.backward()
-    loss_history.append(loss.item())
-    optimizer.step()
-
-    if epoch % 100 == 0:
-        print(f"Epoch {epoch}: Loss = {loss.item():.6f}")
+print('Input Size: ', label_tensor_input.size())
+print('Output Size: ', label_tensor_output.size(), '\n')
+tensor_input_df
 ```
 
-    Epoch 0: Loss = 138716960.000000
-    Epoch 100: Loss = 18432360.000000
-    Epoch 200: Loss = 32317.492188
-    Epoch 300: Loss = 29755.869141
-    Epoch 400: Loss = 27378.242188
-    Epoch 500: Loss = 24849.810547
-    Epoch 600: Loss = 22261.812500
-    Epoch 700: Loss = 19689.150391
-    Epoch 800: Loss = 17192.818359
-    Epoch 900: Loss = 14821.009766
-    Epoch 1000: Loss = 12610.442383
-    Epoch 1100: Loss = 10587.031250
-    Epoch 1200: Loss = 8766.829102
-    Epoch 1300: Loss = 7157.091309
-    Epoch 1400: Loss = 5757.470703
-    Epoch 1500: Loss = 4561.178223
-    Epoch 1600: Loss = 3556.290283
-    Epoch 1700: Loss = 2727.079346
-    Epoch 1800: Loss = 2055.189453
-    Epoch 1900: Loss = 1520.990601
-    Epoch 2000: Loss = 1104.481445
-    Epoch 2100: Loss = 786.257324
-    Epoch 2200: Loss = 548.231384
-    Epoch 2300: Loss = 374.015259
-    Epoch 2400: Loss = 249.440506
-    Epoch 2500: Loss = 162.421387
-    Epoch 2600: Loss = 103.151779
-    Epoch 2700: Loss = 63.819149
-    Epoch 2800: Loss = 38.414352
-    Epoch 2900: Loss = 22.462780
-    Epoch 3000: Loss = 12.745688
-    Epoch 3100: Loss = 7.005270
-    Epoch 3200: Loss = 3.724057
-    Epoch 3300: Loss = 1.911139
-    Epoch 3400: Loss = 0.945234
-    Epoch 3500: Loss = 0.449556
-    Epoch 3600: Loss = 0.205142
-    Epoch 3700: Loss = 0.089981
-    Epoch 3800: Loss = 0.037488
-    Epoch 3900: Loss = 0.014909
-    Epoch 4000: Loss = 0.005670
-    Epoch 4100: Loss = 0.002037
-    Epoch 4200: Loss = 0.000709
-    Epoch 4300: Loss = 0.000237
-    Epoch 4400: Loss = 0.000078
-    Epoch 4500: Loss = 0.000025
-    Epoch 4600: Loss = 0.000009
-    Epoch 4700: Loss = 0.000003
-    Epoch 4800: Loss = 0.000001
-    Epoch 4900: Loss = 0.000001
+    Input Size:  torch.Size([100, 1])
+    Output Size:  torch.Size([100, 1]) 
     
 
-# Loss function
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sigma_t</th>
+      <th>e_s</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>8.0</td>
+      <td>3200.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>24.0</td>
+      <td>9600.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>37.0</td>
+      <td>14800.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>40.0</td>
+      <td>16000.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>43.0</td>
+      <td>17200.0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>95</th>
+      <td>41.0</td>
+      <td>16400.0</td>
+    </tr>
+    <tr>
+      <th>96</th>
+      <td>9.0</td>
+      <td>3600.0</td>
+    </tr>
+    <tr>
+      <th>97</th>
+      <td>23.0</td>
+      <td>9200.0</td>
+    </tr>
+    <tr>
+      <th>98</th>
+      <td>17.0</td>
+      <td>6800.0</td>
+    </tr>
+    <tr>
+      <th>99</th>
+      <td>18.0</td>
+      <td>7200.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>100 rows × 2 columns</p>
+</div>
+
+
+
+### **Definition eines PINN-Problems in PINA**  
 
 
 ```python
-plt.plot(loss_history, label="Loss")
+from pina.problem import AbstractProblem
+from pina.domain import CartesianDomain
+from pina import Condition
+
+input_conditions = {'data': Condition(input=label_tensor_input, target=label_tensor_output),}
+
+class SimpleODE(AbstractProblem):
+
+    # Definition der Eingabe- und Ausgabevariablen basierend auf LabelTensor
+    input_variables = label_tensor_input.labels
+    output_variables = label_tensor_output.labels
+
+    # Wertebereich
+    domain = CartesianDomain({label_tensor_input: [0, 1]})#, 'delta_epsilon': [0, 1]})  # Wertebereich immer definieren!
+
+    # Definition der Randbedingungen und (hier: nur) vorberechnetet Punkte
+    conditions = input_conditions
+
+    label_tensor_output=label_tensor_output
+
+    # Methode zur Definition der "wahren Lösung" des Problems
+    def truth_solution(self, pts):
+        return torch.exp(pts.extract(label_tensor_input))
+
+# Problem-Instanz erzeugen
+problem = SimpleODE()
+
+print('Input: ', problem.input_variables)
+print('Output: ', problem.output_variables)
+```
+
+    Input:  ['sigma_t']
+    Output:  ['e_s']
+
+
+# Training eines Physics-Informed Neural Networks (PINN) mit PINA
+
+Dieser Code definiert und trainiert ein **Physics-Informed Neural Network (PINN)** zur Lösung des Problems in PINA.
+
+- **Modell (`FeedForward`)**: Ein neuronales Netz mit drei versteckten Schichten (`[50, 50, 50]`), das mit der ReLU-Aktivierungsfunktion arbeitet.
+- **PINN-Objekt (`PINN`)**: Erstellt das PINN-Modell, das die physikalischen Randbedingungen des Problems berücksichtigt.
+- **TensorBoard-Logger (`TensorBoardLogger`)**: Speichert Trainingsmetriken zur Visualisierung.
+- **Trainer (`Trainer`)**: Führt das Training für 1500 Epochen mit Batch-Größe 10 durch.
+- **Training starten (`trainer.train()`)**: Startet den Optimierungsprozess und protokolliert die Metriken.
+
+Am Ende wird die **finale Loss-Funktion** ausgegeben, um die Trainingsqualität zu bewerten.
+
+**Mehr zu `Trainer`:**  
+[PINA-Dokumentation – Trainer](https://mathlab.github.io/PINA/_rst/trainer.html)
+
+
+
+```python
+from pina import Trainer
+from pina.solver import PINN
+from pina.model import FeedForward
+from pina.callback import MetricTracker
+import torch.nn as nn
+# Model erstellen
+model = FeedForward(
+    layers=[50,50,50],
+    func=nn.ReLU,
+    output_dimensions=len(problem.output_variables),
+    input_dimensions=len(problem.input_variables)
+)
+
+# PINN-Objekt erstellen
+pinn = PINN(problem, model)
+
+# Trainer erstellen mit TensorBoard-Logger
+trainer = Trainer(
+    solver=pinn,
+    max_epochs=1000,
+    callbacks=[MetricTracker()],
+    batch_size=16,
+    accelerator='cpu',
+    enable_model_summary=False,
+)
+
+
+# Training starten
+trainer.train()
+
+print('\nFinale Loss Werte')
+# Inspect final loss
+trainer.logged_metrics
+```
+
+    💡 Tip: For seamless cloud uploads and versioning, try installing [litmodels](https://pypi.org/project/litmodels/) to enable LitModelCheckpoint, which syncs automatically with the Lightning model registry.
+    GPU available: True (cuda), used: False
+    TPU available: False, using: 0 TPU cores
+    HPU available: False, using: 0 HPUs
+    /home/mrschiller/Dokumente/git_projects/nn_oedometer_lstm/venv/lib/python3.12/site-packages/lightning/pytorch/trainer/setup.py: PossibleUserWarning: GPU available but not used. You can set it by doing `Trainer(accelerator='gpu')`.
+    /home/mrschiller/Dokumente/git_projects/nn_oedometer_lstm/venv/lib/python3.12/site-packages/lightning/pytorch/trainer/connectors/logger_connector/logger_connector.py: UserWarning: Starting from v1.9.0, `tensorboardX` has been removed as a dependency of the `lightning.pytorch` package, due to potential conflicts with other packages in the ML ecosystem. For this reason, `logger=True` will use `CSVLogger` as the default logger, unless the `tensorboard` or `tensorboardX` packages are found. Please `pip install lightning[extra]` or one of them to enable TensorBoard support by default
+    /home/mrschiller/Dokumente/git_projects/nn_oedometer_lstm/venv/lib/python3.12/site-packages/lightning/pytorch/trainer/configuration_validator.py: PossibleUserWarning: You defined a `validation_step` but have no `val_dataloader`. Skipping val loop.
+    /home/mrschiller/Dokumente/git_projects/nn_oedometer_lstm/venv/lib/python3.12/site-packages/lightning/pytorch/loops/fit_loop.py: PossibleUserWarning: The number of training batches (7) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
+
+
+    Epoch 999: 100%|█| 7/7 [00:00<00:00, 154.05it/s, v_num=1, data_loss_step=1.46e-5
+
+    `Trainer.fit` stopped: `max_epochs=1000` reached.
+
+
+    Epoch 999: 100%|█| 7/7 [00:00<00:00, 140.79it/s, v_num=1, data_loss_step=1.46e-5
+    
+    Finale Loss Werte
+
+
+
+
+
+    {'data_loss_step': tensor(1.4637e-05),
+     'train_loss_step': tensor(1.4637e-05),
+     'data_loss_epoch': tensor(5.6194e-06),
+     'train_loss_epoch': tensor(5.6194e-06)}
+
+
+
+
+```python
+import matplotlib.pyplot as plt
+
+data_loss = trainer.callbacks[0].metrics["train_loss_epoch"].tolist()
+
+plt.plot(data_loss, label="Loss")
+plt.xlabel('Epochs')
+plt.ylabel('Train Loss')
 plt.show()
 ```
 
 
     
-![png](output_16_0.png)
+![png](output_18_0.png)
     
 
-
-
-```python
-pred_input = torch.tensor([1.0], dtype=torch.float).unsqueeze(-1) 
-
-model.eval()
-with torch.no_grad():
-    pred = model(pred_input)
-
-print(pred)
-```
-
-    tensor([[400.0014]])
-    
 
 # Plot of stress–strain curve
 
@@ -395,12 +584,11 @@ def plot_result(iterations=20, start_sigma=1, delta_epsilon=0.0005):
     plt.title('True Simga mit Pred E_s')
     plt.legend()
     plt.show()
-    
 plot_result()
 ```
 
 
     
-![png](output_19_0.png)
+![png](output_20_0.png)
     
 
