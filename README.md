@@ -24,7 +24,7 @@ $$
 
 <br> 
 
-Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ ; $\Delta\epsilon$ }, `Output` { $\sigma_{t+1}$ }.
+Um das PINA-Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ }, `Output` { $E_s$ }.
 <br>
 ### Variablendeklaration
 - $\sigma_t$ = `sigma_t`
