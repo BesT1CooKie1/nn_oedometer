@@ -4,6 +4,7 @@ venv
 files/tutorial*
 .backup
 lightning_logs
+.*
 
 # Bestimmte Dateien ignorieren
 .log  
