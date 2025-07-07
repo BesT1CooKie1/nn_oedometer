@@ -566,8 +566,8 @@ def plot_result(iterations=20, start_sigma=1, delta_epsilon=0.0005):
     plt.plot(sigma_true, e_s_true_plot, label='$E_{s,true}$, $\sigma_{true}$')
 
     plt.gca().invert_yaxis()
-    plt.xlabel('Sigma_t')
-    plt.ylabel('Epsilon')
+    plt.xlabel('$\sigma_t$')
+    plt.ylabel('$\epsilon$')
     plt.title(f'Spannungsdehnungs Verlauf mit $\sigma_0={start_sigma}$ und $\Delta\epsilon=0.0005$')
     plt.legend()
     plt.show()
