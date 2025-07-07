@@ -137,50 +137,50 @@ pd.DataFrame([[input_str] + list_input, [output_str] + list_output])
     <tr>
       <th>0</th>
       <td>sigma_t</td>
-      <td>8.0</td>
-      <td>24.0</td>
-      <td>37.0</td>
-      <td>40.0</td>
-      <td>43.0</td>
-      <td>8.0</td>
-      <td>25.0</td>
-      <td>47.0</td>
-      <td>47.0</td>
-      <td>...</td>
-      <td>16.0</td>
-      <td>23.0</td>
-      <td>40.0</td>
-      <td>36.0</td>
-      <td>25.0</td>
-      <td>41.0</td>
-      <td>9.0</td>
-      <td>23.0</td>
-      <td>17.0</td>
+      <td>20.0</td>
+      <td>30.0</td>
+      <td>15.0</td>
+      <td>20.0</td>
       <td>18.0</td>
+      <td>4.0</td>
+      <td>33.0</td>
+      <td>25.0</td>
+      <td>6.0</td>
+      <td>...</td>
+      <td>44.0</td>
+      <td>39.0</td>
+      <td>50.0</td>
+      <td>14.0</td>
+      <td>5.0</td>
+      <td>26.0</td>
+      <td>16.0</td>
+      <td>4.0</td>
+      <td>24.0</td>
+      <td>20.0</td>
     </tr>
     <tr>
       <th>1</th>
       <td>e_s</td>
-      <td>3200.0</td>
-      <td>9600.0</td>
-      <td>14800.0</td>
-      <td>16000.0</td>
-      <td>17200.0</td>
-      <td>3200.0</td>
-      <td>10000.0</td>
-      <td>18800.0</td>
-      <td>18800.0</td>
-      <td>...</td>
-      <td>6400.0</td>
-      <td>9200.0</td>
-      <td>16000.0</td>
-      <td>14400.0</td>
-      <td>10000.0</td>
-      <td>16400.0</td>
-      <td>3600.0</td>
-      <td>9200.0</td>
-      <td>6800.0</td>
+      <td>8000.0</td>
+      <td>12000.0</td>
+      <td>6000.0</td>
+      <td>8000.0</td>
       <td>7200.0</td>
+      <td>1600.0</td>
+      <td>13200.0</td>
+      <td>10000.0</td>
+      <td>2400.0</td>
+      <td>...</td>
+      <td>17600.0</td>
+      <td>15600.0</td>
+      <td>20000.0</td>
+      <td>5600.0</td>
+      <td>2000.0</td>
+      <td>10400.0</td>
+      <td>6400.0</td>
+      <td>1600.0</td>
+      <td>9600.0</td>
+      <td>8000.0</td>
     </tr>
   </tbody>
 </table>
@@ -226,28 +226,28 @@ tensor_data_df
   <tbody>
     <tr>
       <th>0</th>
-      <td>8.0</td>
-      <td>3200.0</td>
+      <td>20.0</td>
+      <td>8000.0</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>24.0</td>
-      <td>9600.0</td>
+      <td>30.0</td>
+      <td>12000.0</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>37.0</td>
-      <td>14800.0</td>
+      <td>15.0</td>
+      <td>6000.0</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>40.0</td>
-      <td>16000.0</td>
+      <td>20.0</td>
+      <td>8000.0</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>43.0</td>
-      <td>17200.0</td>
+      <td>18.0</td>
+      <td>7200.0</td>
     </tr>
     <tr>
       <th>...</th>
@@ -256,28 +256,28 @@ tensor_data_df
     </tr>
     <tr>
       <th>95</th>
-      <td>41.0</td>
-      <td>16400.0</td>
+      <td>26.0</td>
+      <td>10400.0</td>
     </tr>
     <tr>
       <th>96</th>
-      <td>9.0</td>
-      <td>3600.0</td>
+      <td>16.0</td>
+      <td>6400.0</td>
     </tr>
     <tr>
       <th>97</th>
-      <td>23.0</td>
-      <td>9200.0</td>
+      <td>4.0</td>
+      <td>1600.0</td>
     </tr>
     <tr>
       <th>98</th>
-      <td>17.0</td>
-      <td>6800.0</td>
+      <td>24.0</td>
+      <td>9600.0</td>
     </tr>
     <tr>
       <th>99</th>
-      <td>18.0</td>
-      <td>7200.0</td>
+      <td>20.0</td>
+      <td>8000.0</td>
     </tr>
   </tbody>
 </table>
@@ -341,28 +341,28 @@ tensor_input_df
   <tbody>
     <tr>
       <th>0</th>
-      <td>8.0</td>
-      <td>3200.0</td>
+      <td>20.0</td>
+      <td>8000.0</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>24.0</td>
-      <td>9600.0</td>
+      <td>30.0</td>
+      <td>12000.0</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>37.0</td>
-      <td>14800.0</td>
+      <td>15.0</td>
+      <td>6000.0</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>40.0</td>
-      <td>16000.0</td>
+      <td>20.0</td>
+      <td>8000.0</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>43.0</td>
-      <td>17200.0</td>
+      <td>18.0</td>
+      <td>7200.0</td>
     </tr>
     <tr>
       <th>...</th>
@@ -371,28 +371,28 @@ tensor_input_df
     </tr>
     <tr>
       <th>95</th>
-      <td>41.0</td>
-      <td>16400.0</td>
+      <td>26.0</td>
+      <td>10400.0</td>
     </tr>
     <tr>
       <th>96</th>
-      <td>9.0</td>
-      <td>3600.0</td>
+      <td>16.0</td>
+      <td>6400.0</td>
     </tr>
     <tr>
       <th>97</th>
-      <td>23.0</td>
-      <td>9200.0</td>
+      <td>4.0</td>
+      <td>1600.0</td>
     </tr>
     <tr>
       <th>98</th>
-      <td>17.0</td>
-      <td>6800.0</td>
+      <td>24.0</td>
+      <td>9600.0</td>
     </tr>
     <tr>
       <th>99</th>
-      <td>18.0</td>
-      <td>7200.0</td>
+      <td>20.0</td>
+      <td>8000.0</td>
     </tr>
   </tbody>
 </table>
@@ -489,12 +489,12 @@ trainer.logged_metrics
     /home/mrschiller/Dokumente/git_projects/nn_oedometer_lstm/venv/lib/python3.12/site-packages/lightning/pytorch/loops/fit_loop.py: PossibleUserWarning: The number of training batches (7) is smaller than the logging interval Trainer(log_every_n_steps=50). Set a lower value for log_every_n_steps if you want to see logs for the training epoch.
 
 
-    Epoch 999: 100%|█| 7/7 [00:00<00:00, 154.05it/s, v_num=1, data_loss_step=1.46e-5
+    Epoch 999: 100%|█| 7/7 [00:00<00:00, 126.66it/s, v_num=0, data_loss_step=0.446, 
 
     `Trainer.fit` stopped: `max_epochs=1000` reached.
 
 
-    Epoch 999: 100%|█| 7/7 [00:00<00:00, 140.79it/s, v_num=1, data_loss_step=1.46e-5
+    Epoch 999: 100%|█| 7/7 [00:00<00:00, 113.17it/s, v_num=0, data_loss_step=0.446, 
     
     Finale Loss Werte
 
@@ -502,10 +502,10 @@ trainer.logged_metrics
 
 
 
-    {'data_loss_step': tensor(1.4637e-05),
-     'train_loss_step': tensor(1.4637e-05),
-     'data_loss_epoch': tensor(5.6194e-06),
-     'train_loss_epoch': tensor(5.6194e-06)}
+    {'data_loss_step': tensor(0.4465),
+     'train_loss_step': tensor(0.4465),
+     'data_loss_epoch': tensor(0.3878),
+     'train_loss_epoch': tensor(0.3878)}
 
 
 
@@ -557,25 +557,42 @@ def plot_result(iterations=20, start_sigma=1, delta_epsilon=0.0005):
             pred = model(sigma_true_tensor)
             e_s_pred.append(pred * sigma_true[i])
             e_s_true_plot.append(e_s_true[i] * sigma_true[i])
-
             sigma_t = sigma_t + pred * delta_epsilon
             sigma_pred.append(sigma_t)
+            
     # Plot der Losskurve
-    plt.scatter(sigma_true, e_s_pred, label='E_s_pred-sigma_true').set_color("red")
-    plt.scatter(sigma_pred, e_s_pred, label='E_s_pred-sigma_pred')
-    plt.plot(sigma_true, e_s_true_plot, label='E_s_true')
+    plt.scatter(sigma_true, e_s_pred, label='$E_{s,pred}$, $\sigma_{true}$').set_color("red")
+    plt.scatter(sigma_pred, e_s_pred, label='$E_{s,pred}$, $\sigma_{pred}$')
+    plt.plot(sigma_true, e_s_true_plot, label='$E_{s,true}$, $\sigma_{true}$')
 
     plt.gca().invert_yaxis()
     plt.xlabel('Sigma_t')
     plt.ylabel('Epsilon')
-    plt.title('True Simga mit Pred E_s')
+    plt.title(f'Spannungsdehnungs Verlauf mit $\sigma_0={start_sigma}$ und $\Delta\epsilon=0.0005$')
     plt.legend()
     plt.show()
 plot_result()
 ```
 
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\D'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\s'
+    <>: SyntaxWarning: invalid escape sequence '\D'
+    /tmp/ipykernel_6718/3899886523.py: SyntaxWarning: invalid escape sequence '\s'
+    /tmp/ipykernel_6718/3899886523.py: SyntaxWarning: invalid escape sequence '\s'
+    /tmp/ipykernel_6718/3899886523.py: SyntaxWarning: invalid escape sequence '\s'
+    /tmp/ipykernel_6718/3899886523.py: SyntaxWarning: invalid escape sequence '\s'
+    /tmp/ipykernel_6718/3899886523.py: SyntaxWarning: invalid escape sequence '\D'
+
+
 
     
-![png](output_20_0.png)
+![png](output_20_1.png)
     
 
