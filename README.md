@@ -141,12 +141,10 @@ Type `list`: `list_input` and `list_output`
 
 ```python
 import pandas as pd
-from pandas import DataFrame
 
-pd.DataFrame([['sigma_t'] + dict_input['input1'], ['eps_delta'] + dict_input['input2'], [output_str] + list_output])
+df = pd.DataFrame([['sigma_t'] + dict_input['input1'], ['eps_delta'] + dict_input['input2'], [output_str] + list_output])
+display(df)
 ```
-
-
 
 
 <div>
@@ -269,7 +267,6 @@ pd.DataFrame([['sigma_t'] + dict_input['input1'], ['eps_delta'] + dict_input['in
 </div>
 
 
-
 # Show trainingsdata (Tensor) as DataFrame
 Type `tensor`: `tensor_input` and `tensor_output`
 
@@ -280,10 +277,8 @@ import torch
 tensor_input_df = pd.DataFrame(
     torch.cat((tensor_input, tensor_output), dim=1), columns=[input_str, 'eps_delta', output_str]
 )
-tensor_input_df
+display(tensor_input_df)
 ```
-
-
 
 
 <div>
@@ -487,7 +482,6 @@ tensor_input_df
   </tbody>
 </table>
 </div>
-
 
 
 # Define SimpleRegressor Model
