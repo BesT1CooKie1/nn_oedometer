@@ -74,12 +74,9 @@ output_str = "e_s"
 oedo_model = 1
 
 # Defining problem parameters
-delta_epsilon = -0.0005
-C_c = 0.005
-e_0 = 1.0
 amount_trainings_data = 1
 
-# Data preparation for
+# Data preparation
 oedo_para = {
     "e0":1,
     "c_c":0.005,
