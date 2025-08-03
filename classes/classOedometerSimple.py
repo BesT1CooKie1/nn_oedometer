@@ -9,14 +9,14 @@ class Oedometer(OedometerParent):
         # Listenlängen anpassen
         self._calc_total_epsilon()
 
-    def _calc_total_epsilon(self):
-        """Berechnet `total_epsilon` für die nächsten Schritte."""
-        pass
+        for i in range(len(self.sigma_t)):
+            print(self.sigma_t[i], self.total_epsilon[i])
 
 
     def _calc_total_epsilon(self):
         for i in range(len(self.delta_epsilon) - 1):
             self.total_epsilon.append(self.total_epsilon[i] + self.delta_epsilon[i])
+        print(self.total_epsilon)
 
     def _calc_e_s(self, sigma_t):
         """Berechnet `e_s` aus `sigma_t`."""

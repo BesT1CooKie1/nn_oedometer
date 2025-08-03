@@ -34,15 +34,15 @@ def show_data():
     import pandas as pd
     df = pd.DataFrame(dict_df)
 
-    print(oedo.delta_sigma)
+    print(oedo.sigma_t)
     print(oedo.total_epsilon)
 
     # Plot setup
     fig, axs = plt.subplots(1, 2, figsize=(15, 7), sharey=True)
 
     # X-Werte vorbereiten
-    x_vals = oedo.delta_sigma
-    y_vals = oedo.total_epsilon[:-1]
+    x_vals = oedo.sigma_t[:39]
+    y_vals = oedo.total_epsilon[:39]
 
     # Linearer Plot (links)
     axs[0].plot(x_vals, y_vals, linewidth=1, label="$\Delta\sigma_{true}$")
