@@ -1,38 +1,64 @@
- # MODUL PyTorch (Python 3.12) hier mit $C_s$
+# Vorhersage des Ödometer-Versuchs mit einem neuronalen Netzwerk
 
-# Vorhersage des Ödometerversuches implementiert
-Ziel war die Implementierung eines neuronalen Netzwerks zur Modellierung des Ödometerversuchs. Dabei wurden gegebene Input-Parameter verarbeitet, um Output-Parameter vorherzusagen.
+**Ziel:**
+Entwicklung eines neuronalen Netzes, das auf Basis gegebener Input-Parameter den Elastizitätsmodul $E_s$ im Ödometer-Versuch vorhersagt.
 
-#### Das Problem ist wie folgt definiert:
+---
+
+## 1. Problemformulierung
+
+Es wird folgende Beziehung zugrunde gelegt:
+
 $$
-\begin{array}{rcl}
-    \sigma_{t+1} & = & \sigma_{t}+\Delta\sigma \\ \\
-    \Delta\sigma & = & E_s\cdot \Delta\epsilon \\ 
-    E_s & = & \frac{1+e_0}{C_c} \cdot \sigma_t
-\end{array}
-\hspace{2cm}
-\begin{array}{l}
-    \textbf{Annahmen:} \\ \\
-    \text{Startwert d. Iteration: } \sigma_t = -1,00 kPa \\
-    e_0 = 1,00 \\ 
-    C_c = 0,005 \\
-    C_s = 0,002 \\
-    \Delta\epsilon = -0,0005
-\end{array}
+\dot{\sigma} = C_1\,\sigma_t\,\dot{\varepsilon} + C_2\,\sigma_t\,\left|\dot{\varepsilon}\right|
 $$
 
-<br> 
+Diese Gleichung beschreibt die Änderung der Spannung $\dot{\sigma}$ in Abhängigkeit von der aktuellen Spannung $\sigma_t$, der Dehnungsrate $\dot{\varepsilon}$ und den Koeffizienten $C_1, C_2$, die aus dem gewählten Modell abgeleitet sind.
 
-Um das Model zu testen werden wir folgende vorberechnete Werte verwenden: `Input` { $\sigma_t$ }, `Output` { $E_s$ }.
-<br>
-### Variablendeklaration
-- $\sigma_t$ = `sigma_t`
-- $\Delta\epsilon$ = `delta_epsilon`
-- $\sigma_{t+1}$ = `delta_sigma
-- $E_s$ = `e_s`
-- $e_0$ = `e_0`
+---
 
-# Generate random trainingsdata
+## 2. Annahmen / Startwerte
+
+Die Berechnung basiert auf folgenden festen Parametern:
+
+- **Startspannung:** $\sigma_0 = -10{,}00\,\text{kPa}$
+- **Porenverhältnis:** $e_0 = 1{,}00$
+- **Koeffizienten:**
+  - $C_c = 0{,}005$
+  - $C_s = 0{,}002$
+- **Dehnungsraten:**
+  - Stauchungsphase: $\dot{\varepsilon}_c = -0{,}0005$
+  - Dehnungsphase: $\dot{\varepsilon}_e = +0{,}0005$
+
+---
+
+## 3. Trainingssetup
+
+- **Input:**
+  $\sigma_t$, $\dot{\varepsilon}$
+- **Output:**
+  Elastizitätsmodul $E_s$
+
+Das neuronale Netz soll aus den aktuellen Zustandsgrößen ($\sigma_t$, $\dot{\varepsilon}$) lernen, in welcher Phase (Kompression vs. Entlastung) sich der Versuch befindet, und darauf basierend $E_s$ schätzen.
+
+---
+
+## 4. Variablendeklaration
+
+| Symbol              | Variable im Code     | Bedeutung |
+|---------------------|----------------------|-----------|
+| $\sigma_t$          | `sigma_t`            | Aktuelle Spannung zum Zeitpunkt $t$ |
+| $\dot{\varepsilon}$ | `delta_epsilon`      | Dehnungsrate; negative Werte: Kompression, positive: Entlastung |
+| $\dot\sigma_t$      | `delta_sigma`        | Inkrementelle Änderung der Spannung |
+| $E_s$               | `e_s`                | Elastizitätsmodul (Zielgröße) |
+| $e_0$               | `e_0`                | Porenverhältniszahl |
+
+---
+
+## 5. Hinweise zur Phase
+
+Die Phase (Stauchung vs. Dehnung) lässt sich über das Vorzeichen von $\dot{\varepsilon}$ ablesen. Alternativ kann explizit ein Zustandsindikator (z. B. one-hot oder diskrete Labels für Belastung/Entlastung) zusätzlich als Feature mitgegeben werden, um dem Modell das Unterscheiden zu erleichtern.
+
 
 
 ```python
@@ -111,7 +137,7 @@ print(tensor_input, tensor_output)
 
 
     
-![png](README_files/README_5_0.png)
+![png](README_files/README_3_0.png)
     
 
 
@@ -1380,7 +1406,7 @@ plt.show()
 
 
     
-![png](README_files/README_15_0.png)
+![png](README_files/README_13_0.png)
     
 
 
