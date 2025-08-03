@@ -81,7 +81,7 @@ oedo_para = {
     "e0":1,
     "c_c":0.005,
     "c_s":0.002,
-    "sigma_prime_p":-1,
+    "sigma_prime_p":-10,
     "sigma_max":-1000,  # kPa
     "sigma_min":-100,   # kPa
     "eps_delta":-0.0005,
@@ -99,12 +99,12 @@ if oedo_model == 0:
     from classes.classOedometerSimple import Oedometer
 else:
     from classes.classOedometerImproved import Oedometer
-sigma_t_train =  [-10] #sample(range(-amount_trainings_data * 2,0), amount_trainings_data)
+# sigma_t_train =  [-10] #sample(range(-amount_trainings_data * 2,0), amount_trainings_data)
 
 list_output = []
 dict_input = {'input1' : [], 'input2' : []}
 for i in range(amount_trainings_data):
-    oedo = Oedometer(sigma_prime_p=sigma_t_train[i])
+    oedo = Oedometer(**oedo_para)
     oedo.run()
     list_output += oedo.e_s_list
     dict_input['input1'] += oedo.sigma_0_list
