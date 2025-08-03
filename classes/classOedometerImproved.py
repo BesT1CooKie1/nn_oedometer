@@ -2,9 +2,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tabulate import tabulate
 
-from classes.classOedometerSimple import Oedometer
-
-
 class Oedometer:
     def __init__(
         self,
