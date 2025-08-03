@@ -336,13 +336,220 @@ Type `tensor`: `tensor_input` and `tensor_output`
 
 
 ```python
-# import torch
-#
-# tensor_input_df = pd.DataFrame(
-#     torch.cat((tensor_input, tensor_output), dim=1), columns=[input_str, output_str]
-# )
-# tensor_input_df
+import torch
+
+tensor_input_df = pd.DataFrame(
+    torch.cat((tensor_input, tensor_output), dim=1), columns=[input_str, 'eps_delta', output_str]
+)
+tensor_input_df
 ```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>sigma_t</th>
+      <th>eps_delta</th>
+      <th>e_s</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-10.000000</td>
+      <td>-0.0005</td>
+      <td>4000.000000</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-12.000000</td>
+      <td>-0.0005</td>
+      <td>4800.000000</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-14.400000</td>
+      <td>-0.0005</td>
+      <td>5760.000000</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>-17.280001</td>
+      <td>-0.0005</td>
+      <td>6912.000000</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>-20.736000</td>
+      <td>-0.0005</td>
+      <td>8294.400391</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>-24.883200</td>
+      <td>-0.0005</td>
+      <td>9953.280273</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>-29.859840</td>
+      <td>-0.0005</td>
+      <td>11943.935547</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>-35.831806</td>
+      <td>-0.0005</td>
+      <td>14332.723633</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>-42.998169</td>
+      <td>-0.0005</td>
+      <td>17199.267578</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>-51.597805</td>
+      <td>-0.0005</td>
+      <td>20639.121094</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>-61.917366</td>
+      <td>-0.0005</td>
+      <td>24766.945312</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>-74.300835</td>
+      <td>-0.0005</td>
+      <td>29720.333984</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>-89.161003</td>
+      <td>-0.0005</td>
+      <td>35664.402344</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>-106.993202</td>
+      <td>-0.0005</td>
+      <td>42797.281250</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>-128.391846</td>
+      <td>-0.0005</td>
+      <td>51356.738281</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>-154.070221</td>
+      <td>-0.0005</td>
+      <td>61628.085938</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>-184.884262</td>
+      <td>-0.0005</td>
+      <td>73953.703125</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>-221.861115</td>
+      <td>-0.0005</td>
+      <td>88744.445312</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>-266.233337</td>
+      <td>-0.0005</td>
+      <td>106493.335938</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>-319.480011</td>
+      <td>-0.0005</td>
+      <td>127792.000000</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>-383.376007</td>
+      <td>-0.0005</td>
+      <td>153350.406250</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>-460.051208</td>
+      <td>-0.0005</td>
+      <td>184020.484375</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>-552.061462</td>
+      <td>-0.0005</td>
+      <td>220824.578125</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>-662.473755</td>
+      <td>-0.0005</td>
+      <td>264989.500000</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>-794.968445</td>
+      <td>-0.0005</td>
+      <td>317987.375000</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>-953.962158</td>
+      <td>0.0005</td>
+      <td>381584.875000</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>-476.981079</td>
+      <td>0.0005</td>
+      <td>476981.093750</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>-238.490540</td>
+      <td>0.0005</td>
+      <td>238490.546875</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>-119.245270</td>
+      <td>0.0005</td>
+      <td>119245.273438</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
 
 # Define SimpleRegressor Model
 
