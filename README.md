@@ -116,20 +116,16 @@ for i in range(amount_trainings_data):
     dict_input['input2'] += oedo.eps_delta_list
 
 oedo.plot()
-# Annahme: dict_input['input1'] und ['input2'] sind Listen von Listen mit Shape (B, L)
+
+
 tensor_input1 = torch.tensor(dict_input['input1'], dtype=torch.float)  # (B, L)
 tensor_input2 = torch.tensor(dict_input['input2'], dtype=torch.float)  # (B, L)
 
-# Safety-Check: gleiche Shape
 if tensor_input1.shape != tensor_input2.shape:
     raise ValueError(f"Input-Shapes mismatch: {tensor_input1.shape} vs {tensor_input2.shape}")
 
-# Zwei Features pro Zeitschritt: (B, L, 2)
-tensor_input = torch.stack((tensor_input1, tensor_input2), dim=-1)  # korrektes Stacking
-
-# Output: angenommen list_output ist ebenfalls (B, L)
+tensor_input = torch.stack((tensor_input1, tensor_input2), dim=-1)
 tensor_output = torch.tensor(list_output, dtype=torch.float)          # (B, L)
-# Optional: Feature-Dimension anhängen, wenn dein Modell (B, L, 1) erwartet
 tensor_output = tensor_output.unsqueeze(-1)  # (B, L, 1)
 
 print(tensor_input, tensor_output)
