@@ -60,6 +60,8 @@ Das neuronale Netz soll aus den aktuellen Zustandsgrößen ($\sigma_t$, $\dot{\v
 Die Phase (Stauchung vs. Dehnung) lässt sich über das Vorzeichen von $\dot{\varepsilon}$ ablesen. Alternativ kann explizit ein Zustandsindikator (z. B. one-hot oder diskrete Labels für Belastung/Entlastung) zusätzlich als Feature mitgegeben werden, um dem Modell das Unterscheiden zu erleichtern.
 
 
+# Grundparameter
+
 
 ```python
 from random import randint
@@ -90,11 +92,7 @@ oedo_para = {
 }
 ```
 
-# Load problem and generate trainings data from 00_problem_settings_functions.ipynb
-
-Available classes: `Oedometer` <br>
-Returns `list_input` and `list_output` as type `list` <br>
-Returns `tensor_input` and `tensor_output` as type `tensor`
+# Load problem and generate trainings
 
 
 ```python
@@ -131,7 +129,7 @@ tensor_output = tensor_output.unsqueeze(-1)  # (B, L, 1)
 
 
     
-![png](README_files/README_3_0.png)
+![png](README_files/README_4_0.png)
     
 
 
@@ -1542,7 +1540,7 @@ plt.show()
 
 
     
-![png](README_files/README_13_0.png)
+![png](README_files/README_14_0.png)
     
 
 
