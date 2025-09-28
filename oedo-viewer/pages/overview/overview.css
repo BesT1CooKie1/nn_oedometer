@@ -1,0 +1,626 @@
+/* pages/overview/overview.css */
+
+/* Layout */
+#content {
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 0 16px 48px;
+}
+
+.intro h1 {
+    margin: 0 0 6px;
+    font-size: clamp(22px, 3.2vw, 32px);
+    line-height: 1.2;
+}
+
+.subtitle {
+    color: var(--muted);
+    margin: 0 0 18px;
+}
+
+/* Stat-Karten */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 640px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+}
+
+.card-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.card-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.card-hint {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* Tabelle / Vorschau */
+.table-sec {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px;
+}
+
+.table-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    padding: 6px 4px 10px;
+    border-bottom: 1px dashed var(--border);
+}
+
+.table-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-actions .compact {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.table-actions input[type="number"] {
+    width: 72px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-alt);
+    color: var(--text);
+}
+
+.table-actions button {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.table-actions button:hover {
+    background: var(--surface-alt);
+}
+
+.table-wrap {
+    overflow: auto;
+    margin-top: 10px;
+}
+
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    background: var(--surface);
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-weight: 600;
+    padding: 10px 8px;
+}
+
+.table tbody td {
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.table tbody tr:hover td {
+    background: var(--active);
+}
+
+/* Legendensektion */
+.legend-sec {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px;
+    margin-bottom: 24px;
+}
+
+.legend-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 8px;
+}
+
+.legend-head h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.legend-meta {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+    .legend-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.legend-card {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 10px;
+}
+
+.legend-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.legend-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.badge {
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 13px;
+    background: var(--surface-alt);
+    white-space: nowrap;
+}
+
+.badge.warn {
+    border-color: var(--warn-border);
+    background: var(--warn-bg);
+}
+
+.legend-note {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* Schema-Leiste */
+.schema-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 6px;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--border);
+}
+
+.schema-items {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.schema-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+}
+
+/* Tabellen: Sticky-Header & Spalten-Highlight */
+.table-wrap {
+    overflow: auto;
+    max-height: 60vh;
+}
+
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+}
+
+.data-table td, .data-table th {
+    white-space: nowrap;
+}
+
+.col-highlight {
+    background: var(--surface-alt);
+}
+
+.data-table tbody tr:hover {
+    outline: 1px solid var(--border-strong);
+}
+
+/* Buttons & Segmented Control im bestehenden Dark-Theme */
+.btn {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: var(--surface-alt);
+}
+
+.btn-ghost {
+    background: transparent;
+    border-color: var(--border);
+}
+
+.segmented {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.seg-btn {
+    background: var(--surface);
+    color: var(--text);
+    border: 0;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.seg-btn + .seg-btn {
+    border-left: 1px solid var(--border);
+}
+
+.seg-btn.active {
+    background: var(--surface-alt);
+    font-weight: 600;
+}
+
+.schema-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Gesamt-Schema */
+.schema-summary {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.schema-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Chip-Liste – sauberer Wrap statt Stapel */
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 32px;
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+}
+
+.chips.expanded {
+    max-height: 200px;
+}
+
+/* bei 'mehr' */
+.pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    white-space: nowrap;
+}
+
+/* Toggle-Button für 'mehr/weniger' */
+.chip-toggle {
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.chip-toggle:hover {
+    background: var(--surface-alt);
+}
+
+/* Aktive-Keys-Anzeige (legend) – gleiche Chips */
+#legendX .pill, #legendY .pill {
+    margin-right: 6px;
+}
+
+/* --- Modal --- */
+.modal {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, .4);
+    z-index: 40;
+}
+
+.modal-card {
+    width: min(900px, 96vw);
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px dashed var(--border);
+}
+
+.modal-body {
+    padding: 12px 14px;
+    display: grid;
+    gap: 12px;
+}
+
+.row {
+    display: grid;
+    gap: 6px;
+}
+
+.lbl {
+    font-weight: 600;
+}
+
+.expr-box {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 8px;
+}
+
+.expr-box input {
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-alt);
+    color: var(--text);
+}
+
+.ops {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ops button, .ops select {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--text);
+}
+
+#varBadges .badge {
+    cursor: pointer;
+}
+
+.preview {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    white-space: pre;
+    background: var(--surface-alt);
+    padding: 8px;
+    border-radius: 8px;
+}
+
+/* Modal default verstecken */
+.modal[hidden] {
+    display: none !important;
+}
+
+/* Sicheres Overlay */
+.modal {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, .4);
+    z-index: 9999; /* über allem */
+}
+
+/* Karte im Modal */
+.modal-card {
+    width: min(900px, 96vw);
+    max-height: 90vh;
+    overflow: auto;
+    background: var(--surface, #111);
+    border: 1px solid var(--border, #333);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+}
+
+/* --- Compact badges ------------------------------------------------------- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border, #333);
+    background: var(--surface-alt, #141414);
+    max-width: 260px; /* keep chips short */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    font-size: 12.5px;
+}
+
+/* chip lines */
+.schema-row {
+    display: grid;
+    grid-template-columns: auto 1fr; /* label | chips */
+    align-items: start;
+    gap: .5rem .75rem;
+}
+
+.schema-row > strong {
+    padding-top: 4px; /* align label with chips */
+    white-space: nowrap;
+}
+
+.schema-row .badge {
+    margin-right: .375rem;
+    margin-bottom: .375rem;
+}
+
+.card-body .schema-row { /* allow wrapping of many chips */
+    grid-auto-rows: min-content;
+}
+
+/* cards look a bit neater */
+.card {
+    border: 1px solid var(--border, #333);
+    border-radius: 12px;
+    margin-bottom: 14px;
+}
+
+.card-title {
+    font-weight: 600;
+    padding: 10px 12px;
+    border-bottom: 1px dashed var(--border, #333);
+}
+
+.card-body {
+    padding: 10px 12px;
+}
+
+.card-hint {
+    opacity: .7;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* --- Features & Targets – Zweispaltiges Zeilenlayout --- */
+#content .schema-panel .kv-row,
+#content .schema-panel .row-kv {
+    display: grid;
+    grid-template-columns: 140px 1fr; /* Label | Inhalt */
+    align-items: start;
+    gap: 6px 12px;
+    margin-block: 6px;
+}
+
+/* Falls deine JS-Komponente andere Row-Container nutzt,
+   greif allgemeiner auf .schema-panel > .card o.ä. zurück: */
+#content .schema-panel .row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: start;
+    gap: 6px 12px;
+}
+
+/* --- Badges sauber nebeneinander, mit Wrap --- */
+#content .schema-panel .legend-badges,
+#content .schema-panel .badges,
+#content .schema-panel .pill-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px; /* horizontal/vertikal Abstand */
+    min-height: 32px; /* verhindert „Absacken“ einzelner Chips */
+}
+
+/* Chips kompakt, kein zusätzliches Außen-Margin von alten Styles */
+#content .schema-panel .legend-badges > *,
+#content .schema-panel .badges > *,
+#content .schema-panel .pill-list > * {
+    margin: 0;
+    white-space: nowrap; /* ein Chip bleibt in sich einzeilig */
+}
+
+/* Label-Spalte optisch ausrichten */
+#content .schema-panel .lbl,
+#content .schema-panel label.lbl,
+#content .schema-panel .kv-label {
+    line-height: 32px; /* an Chip-Höhe angleichen */
+    color: var(--muted, #9aa);
+}
+
+/* Optional: schmalere Abstände innerhalb der Kartenüberschriften */
+#content .schema-panel .card .card-title {
+    margin-bottom: 8px;
+}
+
+#content .schema-panel .legend-badges,
+#content .schema-panel .badges,
+#content .schema-panel .pill-list,
+#content .schema-panel .chips { /* ← ergänzen falls nötig */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}

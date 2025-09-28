@@ -1,0 +1,281 @@
+:root {
+    --bg: #0b0d10;
+    --text: #e8eaf0;
+    --muted: #9aa4b2;
+    --border: #222933;
+    --surface: #12161c;
+    --card: #11151b;
+    --accent: #4a8bff;
+    --radius: 12px;
+    --highlight: rgba(186, 186, 186, 0.69);
+    --header-h: 64px;
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, Segoe UI, Roboto, sans-serif
+}
+
+.topbar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface)
+}
+
+.link {
+    color: var(--text);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 8px
+}
+
+.grid {
+    display: grid;
+    grid-template-columns:380px 1fr;
+    gap: 12px;
+    padding: 12px
+}
+
+.panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px
+}
+
+h1, h2 {
+    margin: 0 0 8px 0
+}
+
+.muted {
+    color: var(--muted);
+    font-size: 12px
+}
+
+.row {
+    display: grid;
+    grid-template-columns:1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px
+}
+
+label {
+    display: grid;
+    gap: 6px;
+    font-size: 14px
+}
+
+select, input[type=number] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text)
+}
+
+.plot-host {
+    width: 100%;
+    height: 480px
+}
+
+.table-wrap {
+    max-height: 50vh;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px
+}
+
+.data-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    padding: 8px 10px;
+    white-space: nowrap
+}
+
+.data-table tbody td {
+    border-bottom: 1px solid var(--border);
+    padding: 6px 10px
+}
+
+/* Highlight rows that belong to the currently selected split */
+#tbl-compare tbody tr.in-split {
+    /* soft yellow tint that works on light & dark */
+    --in-split-bg: var(--highlight);
+    --in-split-bar: var(--highlight);
+
+    background: var(--in-split-bg);
+    position: relative; /* for the left accent bar */
+}
+
+/* a slim accent bar on the left for quick scanning */
+/*#tbl-compare tbody tr.in-split::before {*/
+/*  content: "";*/
+/*  position: absolute;*/
+/*  left: 0; top: 0; bottom: 0;*/
+/*  width: 4px;*/
+/*  background: var(--in-split-bar);*/
+/*  opacity: 0.9;*/
+/*}*/
+
+/* keep text readable if your table has zebra striping on hover */
+#tbl-compare tbody tr.in-split:hover {
+    filter: brightness(1.02);
+}
+
+/* if a row is both active and in-split, let active styling win but keep a hint */
+#tbl-compare tbody tr.active.in-split {
+    /* assume your .active uses a stronger bg; add a faint outline */
+    box-shadow: inset 0 0 0 2px rgba(255, 235, 59, 0.6);
+}
+
+/* Ensure the two-column layout doesn't stretch the sidebar vertically */
+#app-view {
+  align-items: start; /* sidebar doesn't stretch to full main height */
+}
+
+/* Make the whole sidebar stick below the header and become its own scroll area */
+#sidebar {
+  position: sticky;
+  top: var(--header-h);
+  max-height: calc(100vh - var(--header-h));
+  overflow: auto;                /* sidebar gets its own scrollbar */
+  overscroll-behavior: contain;  /* prevent rubberbanding from bubbling */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;            /* room for scrollbar so text doesn't hug edge */
+}
+
+/* Let the Samples card take remaining vertical space inside the sticky sidebar */
+#card-samples {
+  flex: 1 1 auto;
+  min-height: 0; /* IMPORTANT: allows children to compute scroll height */
+}
+
+/* The list inside Samples scrolls if it overflows */
+#samples-list {
+  overflow: auto;
+  max-height: 100%;
+  min-height: 0;
+}
+
+/* Optional: nicer sticky-scroll look */
+#sidebar .card {
+  margin: 0; /* remove extra gaps handled by flex gap */
+}
+
+/* === configurable series colors (you will replace these) === */
+#plot-legend {
+    --curve-truth: #5b9bd5;
+    --curve-pred-prop: #5e5e5e; /* propagated */
+    --curve-direct-prop-rec: #E91E63; /* direct propagated recursive */
+    --curve-single: #FF9800; /* single-sample markers */
+}
+
+/* two-column layout within the card */
+#plot-legend .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* group headings */
+#plot-legend .legend-group-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: var(--text, #e8eaed);
+    opacity: 0.95;
+}
+
+/* rows list (keeps your existing structure) */
+#plot-legend .legend {
+    display: grid;
+    row-gap: 10px;
+}
+
+#plot-legend .li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    column-gap: 10px;
+    align-items: center;
+}
+
+#plot-legend .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* markers: base */
+#plot-legend .marker-line {
+    width: 24px;
+    height: 0;
+    border-bottom: 2px solid var(--fg-2, #9aa0a6);
+}
+
+#plot-legend .marker-line.dash {
+    border-bottom-style: dashed;
+}
+
+#plot-legend .marker-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--fg-2, #9aa0a6);
+}
+
+/* markers: series-specific colors (hooked to variables above) */
+#plot-legend .marker--truth {
+    border-bottom-color: var(--curve-truth);
+}
+
+#plot-legend .marker--pred-prop {
+    border-bottom-color: var(--curve-pred-prop);
+}
+
+#plot-legend .marker--direct-prop-rec {
+    border-bottom-color: var(--curve-direct-prop-rec);
+}
+
+#plot-legend .marker--single {
+    background: var(--curve-single);
+}
+
+/* text */
+#plot-legend .txt {
+    line-height: 1.35;
+}
+
+#plot-legend .txt b {
+    font-weight: 700;
+}
+
+/* responsive: stack on narrow sidebars */
+@media (max-width: 960px) {
+    #plot-legend .legend-grid {
+        grid-template-columns: 1fr;
+    }
+}

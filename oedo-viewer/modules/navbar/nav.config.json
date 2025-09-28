@@ -1,0 +1,19 @@
+{
+  "brand": {
+    "title": "Oedometer Viewer",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/HafenCity_Universit%C3%A4t_Hamburg_%28HCU%29_Logo.svg/640px-HafenCity_Universit%C3%A4t_Hamburg_%28HCU%29_Logo.svg.png",
+    "href": "pages/generated/generated.html"
+  },
+  "items": [
+    { "label": "Overview",  "href": "pages/overview/overview.html" },
+    { "label": "Dataset", "href": "pages/generated/generated.html" },
+    { "label": "Validation",  "href": "pages/result/result.html" },
+    {
+      "label": "Data",
+      "children": [
+        { "label": "Samples CSV", "href": "../../viewer_data/samples.csv", "external": true, "target": "_blank" },
+        { "label": "Runs CSV",    "href": "../../viewer_data/runs.csv",    "external": true, "target": "_blank" }
+      ]
+    }
+  ]
+}

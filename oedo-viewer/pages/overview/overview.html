@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"/>
+    <title>Overview · Oedo Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <!-- Navbar (modular, unabhängig vom Seiten-CSS) -->
+    <base href="/oedo-viewer/">
+    <script type="module" src="modules/navbar/navbar.js"></script>
+    <!-- 2) Deine globalen Tokens / Theme -->
+    <link rel="stylesheet" href="assets/base/base.css"/>
+
+    <!-- 3) Modul- und Seiten-CSS -->
+    <link rel="stylesheet" href="modules/navbar/navbar.css"/>
+    <link rel="stylesheet" href="pages/overview/overview.css"/>
+    <!-- winziger Favicon-Fallback, damit kein 404 auf /favicon.ico -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>">
+</head>
+<body>
+<!-- Mount-Point für Navbar -->
+<header id="app-header"></header>
+
+<!-- Seiteninhalt -->
+<main id="content">
+    <section class="intro">
+        <h1>Overview</h1>
+        <p class="subtitle">
+            Schneller Überblick über vorhandene Datensätze und Läufe.
+        </p>
+    </section>
+
+    <section class="stats">
+        <div class="card">
+            <div class="card-title">Samples</div>
+            <div class="card-value" id="samplesCount">–</div>
+            <div class="card-hint"><code>viewer_data/samples.csv</code></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Samples total</div>
+            <div class="card-value" id="runsCount">–</div>
+            <div class="card-hint"><code>viewer_data/runs.csv</code></div>
+        </div>
+    </section>
+
+
+    <div class="schema-panel">
+    </div>
+
+    <!-- Neue Daten-Ansicht (Rohdaten / Processed / Normalisierung-Check) -->
+    <section class="table-sec">
+        <div class="table-header">
+            <h2>Datensatz</h2>
+            <div class="table-actions">
+                <button id="refreshBtn" type="button">Neu laden</button>
+            </div>
+        </div>
+        <div class="schema-bar">
+
+            <div class="schema-actions">
+                <div class="af-segmented" role="tablist" aria-label="Datenansicht">
+                    <button class="af-seg-btn active" data-view="raw" role="tab" aria-selected="true">Rohdaten</button>
+                    <button class="af-seg-btn" data-view="proc" role="tab" aria-selected="false">Features</button>
+                    <!--<button class="af-seg-btn" data-view="norm" role="tab" aria-selected="false">Norm-Check</button>-->
+                </div>
+                <label class="compact">
+                    <span>max. Zeilen</span>
+                    <input id="maxRows" type="number" min="5" max="200" step="5" value="20"/>
+                </label>
+                <button id="exportProcCsv" class="btn btn-ghost" type="button" title="Process-CSV exportieren">Export
+                </button>
+                <button id="addFeatureBtn" class="btn" type="button" title="Neues Feature/Target definieren">Add Feature
+                </button>
+            </div>
+        </div>
+        <!-- Tabellen-Container -->
+        <div id="tableContainers">
+            <div id="rawTableWrap" class="table-wrap" role="region" aria-live="polite"></div>
+            <div id="procTableWrap" class="table-wrap" role="region" aria-live="polite" hidden></div>
+            <div id="normTableWrap" class="table-wrap" role="region" aria-live="polite" hidden></div>
+        </div>
+    </section>
+    <!-- Add-Feature Modal -->
+    <div id="featureModal" hidden role="dialog" aria-modal="true" aria-labelledby="featModalTitle" class="modal">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 id="featModalTitle">Zusätzliche Features / Target</h3>
+                <button id="featClose" class="btn-ghost" aria-label="Schließen">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+                    <label class="lbl">Verfügbare Variablen</label>
+                    <div id="varBadges" class="legend-badges"></div>
+                </div>
+
+                <div class="row">
+                    <label class="lbl">Ausdruck</label>
+                    <div class="expr-box">
+                        <input id="exprInput" type="text" placeholder="z.B. sigma_0*abs(eps_delta)"/>
+                        <input id="aliasInput" type="text" placeholder="Alias (optional), z.B. s0_absed"/>
+                    </div>
+                    <div class="ops">
+                        <button data-op="+" type="button">+</button>
+                        <button data-op="-" type="button">−</button>
+                        <button data-op="*" type="button">×</button>
+                        <button data-op="/" type="button">÷</button>
+                        <button data-op="**" type="button">^</button>
+                        <select id="funcSel">
+                            <option value="">Funktion…</option>
+                            <option>abs( )</option>
+                            <option>sign( )</option>
+                            <option>sqrt( )</option>
+                            <option>log( )</option>
+                            <option>exp( )</option>
+                            <option>clip( , , )</option>
+                            <option>where( , , )</option>
+                            <option>maximum( , )</option>
+                            <option>minimum( , )</option>
+                            <option>pow( , )</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <label class="lbl">Gesammelte Ausdrücke</label>
+                    <div id="exprList" class="legend-badges"></div>
+                </div>
+
+                <div class="row">
+                    <label class="lbl">Target (optional)</label>
+                    <input id="targetInput" type="text" placeholder="z.B. e_s oder eine Formel"/>
+                </div>
+                <div id="additionalPreviewBtnWrap"></div>
+
+
+                <div class="row hint">
+                    Whitelist: <code>+ - * / **</code> und Funktionen: <code>abs, sign, sqrt, log, exp, clip, where,
+                    maximum, minimum, pow</code>.
+                </div>
+
+                <div class="row">
+                    <button id="addExpr" class="btn" type="button">Ausdruck zur Liste</button>
+                    <button id="clearExprs" class="btn btn-ghost" type="button">Liste leeren</button>
+                </div>
+
+                <hr/>
+
+                <div class="row">
+                    <button id="previewExprs" class="btn btn-ghost" type="button">Preview (erste 5)</button>
+                    <button id="applyExprs" class="btn" type="button">Speichern</button>
+                </div>
+
+                <div id="previewBox" class="preview"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Runs Preview Modal -->
+    <div id="addRunsPreviewModal" hidden class="modal" role="dialog" aria-modal="true"
+         aria-labelledby="addRunsPrevTitle">
+        <div class="modal-card" style="width:min(1000px,96vw);max-height:90vh;overflow:auto;">
+            <div class="modal-head"
+                 style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px dashed var(--border,#333);">
+                <h3 id="addRunsPrevTitle">Additional Runs – Preview</h3>
+                <button id="addRunsPrevClose" class="btn-ghost" aria-label="Schließen">✕</button>
+            </div>
+            <div class="modal-body" style="padding:10px 12px;display:grid;gap:12px;">
+                <div class="row" style="display:flex;gap:.5rem;align-items:center;">
+                    <span class="lbl" style="font-weight:600;">Zeilen:</span>
+                    <input id="addPrevLimit" type="number" min="1" max="2000" value="20"
+                           style="width:80px;padding:4px 6px;border:1px solid var(--border,#333);border-radius:8px;background:var(--surface-alt,#141414);color:var(--text,#fff)"/>
+                    <button id="addPrevReload" class="btn" type="button">Neu laden</button>
+                </div>
+                <div id="addPrevContent" style="display:grid;gap:16px;"></div>
+                <div class="card-hint">Quelle: <code>viewer_data/additional_runs.csv</code> &
+                    <code>viewer_data/runs.csv</code> (nur Anzeige, keine Speicherung).
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</main>
+
+<!-- Seiten-spezifisches JS -->
+<script type="module" src="pages/overview/overview.js"></script>
+<script type="module" src="pages/overview/add_features.js"></script>
+<script type="module" src="pages/overview/features-panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Oedometer Debug Viewer</title>
+  <base href="/oedo-viewer/">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Basis-Theme (aus /assets) -->
+  <link rel="stylesheet" href="assets/base/base.css"/>
+    <link rel="stylesheet" href="assets/base/theme-plotly.css"/>
+
+  <!-- Seitenstyles (aus demselben Ordner wie diese HTML) -->
+  <link rel="stylesheet" href="pages/generated/generated.css" />
+  <link rel="stylesheet" href="modules/navbar/navbar.css">
+
+  <!-- winziger Favicon-Fallback, damit kein 404 auf /favicon.ico -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>">
+</head>
+<body>
+  <header id="app-header"></header>
+
+  <div id="app-view">
+    <aside id="sidebar">
+      <div class="card">
+        <div class="card-title">Runs</div>
+        <div id="run-chips" class="chips"></div>
+        <div class="muted" style="margin-top:6px;">Klick auf Chip filtert nach Run-ID.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Filter</div>
+        <label>Phase
+          <select id="filter-phase">
+            <option value="">(alle)</option>
+            <option value="compression">compression</option>
+            <option value="extension">extension</option>
+          </select>
+        </label>
+        <label>Volltext
+          <input id="filter-text" type="text" placeholder="rank, param, …">
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Samples</div>
+        <div id="samples-list" class="list"></div>
+      </div>
+    </aside>
+
+    <main id="main">
+      <div class="row">
+        <div class="card">
+          <div class="card-title">Aktuelles Sample</div>
+          <table id="tbl-sample" class="kv-table"><tbody></tbody></table>
+        </div>
+        <div class="card">
+          <div class="card-title">Grundparameter</div>
+          <table id="tbl-params" class="kv-table"><tbody></tbody></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Plot σ–ε (Run)</div>
+        <div id="plot" class="plot-host"></div>
+      </div>
+
+     <div class="card">
+      <div class="card-title">RUNS – Tabellenansicht (pro Step)</div>
+
+      <div class="table-toolbar">
+        <span class="muted">Klicke auf die Run-Chips links, um zu filtern. Header klicken = sortieren.</span>
+        <div id="runs-col-hint" class="col-hint" aria-live="polite"></div>
+        <button id="runs-export" class="btn">CSV exportieren</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="tbl-runs" class="data-table">
+          <thead>
+            <tr>
+              <th data-key="run_id"    data-type="number">Run</th>
+              <th data-key="step_idx"  data-type="number">Step</th>
+              <th data-key="phase">Phase</th>
+              <th data-key="sigma_0"   data-type="number">σ₀</th>
+              <th data-key="eps_total" data-type="number">ε<sub>tot</sub></th>
+              <th data-key="eps_delta" data-type="number">Δε</th>
+              <th data-key="e_s"       data-type="number">E<sub>s</sub></th>
+              <th data-key="sigma_delta" data-type="number">Δσ</th>
+              <!-- param.* Spalten fügt JS dynamisch rechts an -->
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="muted">Zeile anklicken → Plot springt auf diesen Step.</div>
+    </div>
+
+
+
+      <div class="card">
+        <div class="muted">Datenquelle:
+          <span class="pill">viewer_data/samples.csv</span>
+          <span class="pill">viewer_data/runs.csv</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Plotly (CDN). Falls du offline bist, ersetze das durch eine lokale Kopie. -->
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+
+  <!-- Plotly-Theme/Hook: färbt ALLE Plots nach deinen CSS-Variablen -->
+  <script src="../../assets/base/theme-plotly.js"></script>
+
+  <!-- Dein Seiten-JS (unverändert, nur Pfad bereinigt) -->
+  <script src="pages/generated/generated.js"></script>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], processEscapes: true },
+      options: { skipHtmlTags: ['script','noscript','style','textarea'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <script src="../../assets/base/latex-mathjax.js"></script>
+  <script type="module" src="modules/navbar/navbar.js"></script>
+</body>
+</html>

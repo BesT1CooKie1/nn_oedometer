@@ -1,0 +1,117 @@
+/* assets/base/base.css */
+/* ============== THEME TOKENS (GLOBAL) ============== */
+/* Light (Default) */
+:root {
+  /* Brand (technisch-kühl) */
+  --brand:        #0f7b86;
+  --brand-600:    #0c6670;
+  --brand-50:     #e6f5f7;
+
+  /* Neutral-Surfaces */
+  --bg:           #f7f8fa;   /* Seitenhintergrund */
+  --surface:      #ffffff;   /* Karten/Paneele */
+  --surface-alt:  #f2f4f6;   /* Inputs/Stripes */
+  --card:         #ffffff;   /* alias */
+
+  /* Textfarben (hoher Kontrast auf light) */
+  --text:         #0b1220;   /* Primärtext ~13:1 auf white */
+  --muted:        #5a6472;   /* Sekundärtext */
+  --link:         var(--brand);
+  --link-hover:   var(--brand-600);
+
+  /* Rahmen / Linien / Schlagschatten */
+  --border:       #d7dbe1;
+  --border-strong:#b9c0c9;
+  --shadow:       0 6px 18px rgba(15, 23, 42, .06);
+
+  /* States */
+  --accent:       var(--brand);
+  --active:       #eef2f6;
+  --same-run:     #d7e7e0;
+  --warn-bg: #387127;
+  --warn-border:  #d97706;
+
+  /* Radius/Spacing */
+  --radius:       12px;
+}
+
+/* Dark */
+:root[data-theme="dark"] {
+  --bg:           #0b0d12;
+  --surface:      #12141b;
+  --surface-alt:  #171a22;
+  --card:         #141822;
+
+  --text:         #e7eaf0;
+  --muted:        #a5aebb;
+
+  --border:       #252a33;
+  --border-strong:#3a414c;
+
+  --active:       #1b222c;
+  --same-run:     #1a2a26;
+
+  --shadow:       0 10px 24px rgba(0,0,0,.35);
+  --link:         #4fd1db;
+  --link-hover:   #36b0ba;
+}
+
+/* High Contrast (zusätzlich schaltbar) */
+:root[data-contrast="hc"] {
+  --border:       #8a93a1;
+  --border-strong:#707a8a;
+  --muted:        #3c4350;
+  --active:       color-mix(in srgb, var(--brand) 10%, transparent);
+}
+
+/* Optional: Systempräferenz als Fallback für Dark */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg:           #0b0d12;
+    --surface:      #12141b;
+    --surface-alt:  #171a22;
+    --card:         #141822;
+    --text:         #e7eaf0;
+    --muted:        #a5aebb;
+    --border:       #252a33;
+    --border-strong:#3a414c;
+    --active:       #1b222c;
+    --same-run:     #1a2a26;
+    --shadow:       0 10px 24px rgba(0,0,0,.35);
+    --link:         #4fd1db;
+    --link-hover:   #36b0ba;
+  }
+}
+
+/* ============== GLOBAL RESETS & UTILS ============== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+.container-narrow { max-width: 1100px; margin-inline: auto; padding-inline: 16px; }
+.card-plain {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.badge-token {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  background: var(--surface-alt);
+  white-space: nowrap;
+}
+.badge-token.warn { border-color: var(--warn-border); background: var(--warn-bg); }
+
+/* Focus sichtbar & farbkonform */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+a { color: var(--link); }
+a:hover { color: var(--link-hover); }

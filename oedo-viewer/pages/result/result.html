@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8"/>
+    <title>Oedometer Result Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <!-- Basis-Theme -->
+    <link rel="stylesheet" href="../../assets/base/base.css"/>
+    <link rel="stylesheet" href="../../assets/base/sidebar.css"/>
+    <link rel="stylesheet" href="../../assets/base/theme-plotly.css"/>
+
+    <!-- Wir nutzen exakt die Styles der Generated-Seite -->
+    <link rel="stylesheet" href="../../pages/generated/generated.css"/>
+    <link rel="stylesheet" href="result.css"/>
+    <link rel="stylesheet" href="../../modules/navbar/navbar.css">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>">
+</head>
+<body>
+<header id="app-header"></header>
+
+<div id="app-view">
+    <aside id="sidebar">
+        <div class="card">
+            <div class="card-title">Durchläufe</div>
+            <div id="run-chips" class="chips"></div>
+            <div class="muted" style="margin-top:6px;">Klick auf Chip filtert nach Run-ID.</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Filter</div>
+            <label>Datensatz
+                <select id="split-filter">
+                    <option value="all">(alle)</option>
+                    <option value="train">Training</option>
+                    <option value="val">Validation</option>
+                    <option value="test" selected>Test</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="card" id="card-samples">
+            <div class="card-title">Versuchswert (Sample) vom aktuellen Datensatz</div>
+            <div id="samples-list" class="list"></div>
+        </div>
+
+    </aside>
+    <div id="sidebar-backdrop" hidden></div>
+    <main id="main">
+
+        <!-- === NEU: TRAINING- / VALIDIERUNGS- / TEST-STATISTIKEN ============== -->
+        <div class="row">
+            <div class="card">
+                <div class="card-title">Trainingsverlauf (MSE)</div>
+                <div id="plot-train-mse" style="height:320px;"></div>
+                <div class="muted">
+                    Quelle: <span class="pill">viewer_data/training_history.csv</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Trainingsverlauf (R²)</div>
+                <div id="plot-train-r2" style="height:320px;"></div>
+                <div class="muted">
+                    Quelle: <span class="pill">viewer_data/training_history.csv</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="card">
+                <div class="card-title">Aufteilung Train / Val / Test</div>
+                <div id="plot-splits" style="height:300px;"></div>
+                <div class="muted">
+                    Quelle: <span class="pill">viewer_data/split_assignments.csv</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Kennzahlen (letzte Epoche & Test)</div>
+                <div class="table-wrap">
+                    <table id="tbl-stats" class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Train (last)</th>
+                            <th>Val (last)</th>
+                            <th>Test (final)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- dynamisch gefüllt aus CSVs -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="muted">
+                    Quellen:
+                    <span class="pill">viewer_data/training_history.csv</span>
+                    <span class="pill">viewer_data/test_metrics.csv</span>
+                </div>
+            </div>
+        </div>
+        <!-- === ENDE NEU ======================================================= -->
+
+
+        <!-- OBERER BEREICH: unverändert links, rechts jetzt "Prognostizierte Werte" -->
+        <div class="row">
+            <div class="card">
+                <div class="card-title">Aktuelles Sample</div>
+                <table id="tbl-sample" class="kv-table">
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Parameter</div>
+                <table id="tbl-params" class="kv-table">
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="card">
+                <div class="card-title">Prognostizierte Werte</div>
+                <table id="tbl-preds" class="kv-table">
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Kurven-Legende (zweispaltig) -->
+        <div class="card" id="plot-legend">
+            <div class="card-title">Plot Erläuterung</div>
+
+            <div class="legend-grid">
+                <!-- LEFT: Truth -->
+                <section class="legend-group">
+                    <div class="legend-group-title">Truth</div>
+                    <div class="legend">
+                        <div class="li">
+                            <div class="icon">
+                                <span class="marker-line marker--truth"></span>
+                            </div>
+                            <div class="txt">
+                                <b>Truth</b> – Originale Messkurve des Oedometer-Versuchs je Run.
+                                Startet bei <b>σ₀</b> (step&nbsp;0) und führt über alle Schritte bis zum Ende.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- RIGHT: Vorhersagen -->
+                <section class="legend-group">
+                    <div class="legend-group-title">Predicted</div>
+                    <div class="legend">
+                        <div class="li">
+                            <div class="icon">
+                                <span class="marker-line dash marker--pred-prop"></span>
+                            </div>
+                            <div class="txt">
+                                <b>Direct Propagated</b> – Ausgangspunkt ist der erste vorhergesagte σ₀-Wert eines Durchlaufes.
+                                Mit diesem Startwert wird der Oedometer-Versuch vollständig durchgerechnet, sodass sich
+                                die Kurve als direkte Fortpflanzung dieses einen vorhergesagten Anfangszustands ergibt.
+                            </div>
+                        </div>
+
+                        <div class="li">
+                            <div class="icon">
+                                <span class="marker-line dash marker--direct-prop-rec "></span>
+                            </div>
+                            <div class="txt">
+                                <b>Recursive Propagated</b> – Beginn ebenfalls mit dem ersten vorhergesagten σ₀-Wert.
+                                Anschließend wird in jedem Schritt das aktuelle Ergebnis ins Modell gegeben, daraus der
+                                Steifemodul Eₛ geschätzt, zurück in σ₀ transformiert und als neuer Start für den
+                                nächsten Schritt verwendet. Auf diese Weise pflanzt sich der Modellfehler rekursiv über
+                                die gesamte Kurve fort.
+                            </div>
+                        </div>
+
+                        <div class="li">
+                            <div class="icon">
+                                <span class="marker-dot marker--single"></span>
+                            </div>
+                            <div class="txt">
+                                <b>Single Sample</b> – Für einen Versuchswert (Sample) wird der Steifemodul Eₛ
+                                vorhergesagt, zurück in σ₀ transformiert und als isolierter Punkt dargestellt.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+
+        <!-- Plot: σ–ε (Run) mit Echt vs. Pred -->
+        <div class="card">
+            <div class="card-title">Plot σ–ε (Run)</div>
+            <div id="plot-se" style="height:420px;"></div>
+            <div class="muted" id="plot-note" style="margin-top:6px;"></div>
+        </div>
+
+        <!-- Vergleich: Echt vs. Pred (dynamisch nur die vorhandenen Paare) -->
+        <div class="card">
+            <div class="table-toolbar">
+                <div class="card-title">Vergleich (Echt vs. Prognose)</div>
+                <span id="compare-col-hint" class="col-hint"></span>
+            </div>
+            <div class="table-wrap">
+                <table id="tbl-compare" class="data-table">
+                    <thead>
+                    <tr></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div><br>
+            <div class="muted">Abkürzungen
+                <span class="pill">•&nbsp;&nbsp;&nbsp;APE : Absolute Percentage Error → 0 % ≙ No Error</span>
+            </div>
+        </div>
+        <!-- Plot und Tabelle können später folgen – jetzt erstmal nur der obere Bereich -->
+        <div class="card">
+            <div class="muted">Datenquelle:
+                <span class="pill">viewer_data/samples.csv</span>
+                <span class="pill">viewer_data/runs_final.csv</span>
+                <span class="pill">viewer_data/training_history.csv</span>
+                <span class="pill">viewer_data/split_assignments.csv</span>
+                <span class="pill">viewer_data/test_metrics.csv</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Plotly + Theme (falls später für Kurven benötigt) -->
+<script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+<script src="../../assets/base/theme-plotly.js"></script>
+
+<!-- Parser für CSV (JSDelivr) -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<!-- Bestehende Logik -->
+<script src="result.js"></script>
+
+<!-- MathJax (JSDelivr) -->
+<script>
+    window.MathJax = {
+        tex: {inlineMath: [['$', '$'], ['\\(', '\\)']], processEscapes: true},
+        options: {skipHtmlTags: ['script', 'noscript', 'style', 'textarea']}
+    };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<script src="../../assets/base/latex-mathjax.js"></script>
+<script src="../../assets/base/sidebar.js"></script>
+
+<!-- Vergleichstabelle & Navbar (vorhanden) -->
+<script type="module" src="../../modules/navbar/navbar.js"></script>
+
+<!-- NEU: Stats-Module (implementierst du in einer separaten JS-Datei) -->
+<script type="module" src="stats.js"></script>
+</body>
+</html>

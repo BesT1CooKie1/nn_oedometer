@@ -1,0 +1,35 @@
+{
+  "join_key": "global_idx",
+  "join_how": "left",
+  "dropped_rows": 0,
+  "feature_names": [
+    "sigma_0",
+    "eps_delta",
+    "F:sigma_0*abs(eps_delta)",
+    "F:abs(eps_delta)",
+    "F:sigma_0*eps_delta"
+  ],
+  "target_names": [
+    "e_s"
+  ],
+  "additional_feature_cols": [
+    "F:sigma_0*abs(eps_delta)",
+    "F:abs(eps_delta)",
+    "F:sigma_0*eps_delta"
+  ],
+  "additional_target_cols": [],
+  "x_scaler": null,
+  "y_scaler": null,
+  "additional_samples_path": "oedo-viewer/viewer_data/additional_samples.csv",
+  "schema_features": [
+    "sigma_0",
+    "eps_delta"
+  ],
+  "schema_targets": [
+    "e_s"
+  ],
+  "additional_index_from_row": true,
+  "additional_index_start": 0,
+  "samples_index_from_row": false,
+  "samples_index_start": 0
+}

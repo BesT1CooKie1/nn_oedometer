@@ -1,0 +1,13 @@
+{
+  "feature_keys": [
+    "sigma_0",
+    "eps_delta"
+  ],
+  "target_key": "e_s",
+  "info": {
+    "origin": "generate_oedometer_dataset",
+    "n_runs": 30,
+    "final_samples": 500,
+    "seed": 8
+  }
+}

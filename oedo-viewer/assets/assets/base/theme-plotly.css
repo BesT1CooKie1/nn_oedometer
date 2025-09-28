@@ -1,0 +1,16 @@
+/* Plot-Container konsistent zum Card-Design */
+.plot-host {
+  width: 100%;
+  height: 420px;
+  display: block;
+}
+
+/* Dezente Modebar, farblich mit Tokens harmonisiert (per JS wird die Farbe noch genauer gesetzt) */
+.js-plotly-plot .modebar {
+  background: transparent !important;
+}
+
+/* Falls Dark-Theme via :root[data-theme="dark"] genutzt wird, gibt es keine zusätzlichen Filter */
+:root[data-theme="dark"] .js-plotly-plot .modebar-btn svg {
+  filter: none;
+}

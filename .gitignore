@@ -1,7 +1,6 @@
 # Ordner ignorieren
 __pycache__  
 venv
-files/tutorial*
 .backup
 lightning_logs
 
