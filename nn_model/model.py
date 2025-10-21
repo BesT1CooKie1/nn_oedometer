@@ -12,7 +12,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import matplotlib.pyplot as plt
 
 # ---------------------------------------------------------------------
-# MODELS (examples – keep your own or extend the registry)
+# MODELS
 # ---------------------------------------------------------------------
 class PiecewiseFromRaw(nn.Module):
     """
