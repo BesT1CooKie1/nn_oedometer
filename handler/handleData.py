@@ -203,6 +203,8 @@ def propagate_direct_from_first_test(
 
 # ---------------------------------------------------------------------
 # 3) RECURSIVE PROPAGATION (Oedometer step -> model Es -> invert -> feed back)
+#     Variant: no duplicates; insert a model-based TURNING-POINT row
+#              at compression→extension flips (same σ0, flipped Δε)
 # ---------------------------------------------------------------------
 def propagate_recursive_from_first_test(
         *,
@@ -220,16 +222,31 @@ def propagate_recursive_from_first_test(
 ) -> Optional[pd.DataFrame]:
     """
     For each run, starting at its FIRST TEST row:
-      σ_cur = σ0_pred(seed)
-      loop j = 1..:
-        (σ_phys_next, eps_total_next) = Oedometer one-step advance from (σ_cur, eps_state)
-        Ês = model([σ_phys_next, Δε])  (with optional x_scaler/y_scaler)
-        σ_ML_next = invert(Ês, params)
-        write row at abs_step = seed_step + j:
-           sigma_0_rec = σ_ML_next, e_s_rec = Ês, eps_total_rec = eps_total_next
-        feedback: σ_cur = σ_ML_next, eps_state = eps_total_next
-      stop at end of run.
-    Writes 'out_path'. Returns DataFrame, or None if model is None.
+
+      Seed:
+        - Take σ_cur from pred_sigma_0 if present, otherwise from truth σ0.
+        - Write the seed row: sigma_0_rec = σ_cur, e_s_rec = None, eps_total_rec = true seed ε_total.
+
+      Loop j = 1.. until end of run:
+        1) Compute one physical oedometer step from (σ_cur, ε_state) with current Δε:
+             (σ_phys_next, ε_total_next) = Oedometer one-step(σ_cur, ε_state, Δε)
+        2) If compressing (Δε<0) and σ_phys_next <= σ_max (compression bound reached):
+             - INSERT a TURNING-POINT ROW at the *current* abs_step:
+                 * Model input: [σ_cur, |Δε|]  (same σ0, flipped Δε)
+                 * sgn = +1 for inversion
+                 * Record: sigma_0_rec = σ_ml_tp, e_s_rec = Ês_tp, eps_total_rec = ε_state (no physical advance)
+                 * Feedback: σ_cur = σ_ml_tp (ε_state unchanged)
+                 * Flip Δε := |Δε| (extension)
+                 * Continue (next iteration will recompute the physical step from the updated state)
+           Else:
+             - If extending (Δε>0) and σ_phys_next >= σ_min (extension bound exceeded): STOP (no extra row)
+             - Otherwise:
+                 * Model input: [σ_phys_next, Δε]
+                 * sgn = sign(Δε) for inversion
+                 * Record: sigma_0_rec = σ_ml_next, e_s_rec = Ês, eps_total_rec = ε_total_next
+                 * Feedback: (σ_cur, ε_state) = (σ_ml_next, ε_total_next)
+
+      Writes 'out_path'. Returns DataFrame, or None if model is None.
     """
     if model is None:
         return None
@@ -251,7 +268,7 @@ def propagate_recursive_from_first_test(
 
     @torch.no_grad()
     def model_predict_es(sigma0_val: float, eps_delta_val: float) -> float:
-        # X = [σ0, Δε]
+        """Predict E_s from [σ0, Δε]. Applies optional scalers."""
         x = np.array([[sigma0_val, eps_delta_val]], dtype=np.float32)
         if x_scaler is not None:
             x = x_scaler.transform(x).astype(np.float32)
@@ -263,6 +280,7 @@ def propagate_recursive_from_first_test(
         return float(y[0, 0])
 
     def invert_es_to_sigma(e_s_val: float, e0: float, c_s: float, c_c: float, sgn: float) -> float:
+        """Invert E_s to σ0 based on chosen oedometer model and current direction sign."""
         if oedo_model == 0:
             return - e_s_val / ((1.0 + e0) / c_c)
         else:
@@ -270,35 +288,10 @@ def propagate_recursive_from_first_test(
             c2 = - (1.0 + e0) / 2.0 * (c_c - c_s) / (c_s * c_c)
             return e_s_val / (c1 + sgn * c2)
 
-    # helper: one Oedometer *step* from (σ_cur, eps_state) -> (σ_next, eps_total_next)
     def oedo_one_step(e0, c_c, c_s, sigma_cur, sigma_max, sigma_min, eps_delta, eps_state):
         """
-        Execute exactly ONE increment using the Oedometer model.
-
-        Parameters
-        ----------
-        e0 : float
-            Initial void ratio
-        c_c : float
-            Compression index
-        c_s : float
-            Swelling/recompression index
-        sigma_cur : float
-            Current effective stress [kPa]
-        sigma_max : float
-            Lower stress bound for compression
-        sigma_min : float
-            Upper stress bound for extension
-        eps_delta : float
-            Increment step size (negative = compression, positive = extension)
-        eps_state : float
-            Current total strain
-
-        Returns
-        -------
-        (sigma_next, eps_next) : tuple[float, float]
-            Next stress–strain state after ONE increment.
-            If the step would violate the stress bounds, returns (None, None).
+        Execute exactly ONE physical increment using the Oedometer model from the given state.
+        Returns (sigma_next, eps_next).
         """
         oed = Oedometer(
             e0=e0,
@@ -309,11 +302,9 @@ def propagate_recursive_from_first_test(
             sigma_min=sigma_min,
             eps_delta=eps_delta,
             eps_0=eps_state,
-            max_iter=1,  # just a safety; we only need one call
+            max_iter=1,  # single increment
         )
-
         sigma_next, eps_next, e_s, sigma_delta = oed.step(eps_delta, sigma_cur, eps_state)
-
         return sigma_next, eps_next
 
     # --- build output skeleton ---
@@ -326,22 +317,10 @@ def propagate_recursive_from_first_test(
             })
     index_out = {(row["run_id"], row["step_idx"]): k for k, row in enumerate(out_rows)}
 
-    def _copy_prev_into_current_row(rid, prev_step, cur_step):
-        """
-        Copy the previously recorded row (prev_step) into the current row (cur_step),
-        duplicating sigma_0_rec, e_s_rec, and eps_total_rec to create a 'turning point'.
-        """
-        jprev = index_out.get((rid, prev_step))
-        jcur  = index_out.get((rid, cur_step))
-        if jprev is None or jcur is None:
-            return
-        out_rows[jcur]["sigma_0_rec"]   = out_rows[jprev]["sigma_0_rec"]
-        out_rows[jcur]["e_s_rec"]       = out_rows[jprev]["e_s_rec"]
-        out_rows[jcur]["eps_total_rec"] = out_rows[jprev]["eps_total_rec"]
-
+    # --- main loop over runs ---
     for rid, steps in by_run_rows.items():
         # find first TEST seed
-        seed_step = None;
+        seed_step = None
         seed_i = None
         for step_idx, gidx, i_row in steps:
             if gidx in test_gidx:
@@ -351,36 +330,33 @@ def propagate_recursive_from_first_test(
             continue
 
         r0 = runs[seed_i]
+
+        # initial σ comes from prediction if present, else truth
         sigma_cur = r0.get("pred_sigma_0", None)
         if sigma_cur is None:
-            continue
+            sigma_cur = r0.get("sigma_0", None)
+        if sigma_cur is None:
+            continue  # cannot seed
 
-        # params
-        e0 = r0["param.e0"]
-        c_s = r0["param.c_s"]
-        c_c = r0["param.c_c"]
-        eps_delta = r0["eps_delta"]
-        sgn = sign(eps_delta)
-        sigma_max = r0["param.sigma_max"]
-        sigma_min = r0["param.sigma_min"]
+        # parameters
+        e0 = float(r0["param.e0"])
+        c_s = float(r0["param.c_s"])
+        c_c = float(r0["param.c_c"])
+        eps_delta = float(r0["eps_delta"])           # sign indicates direction
+        sigma_max = float(r0["param.sigma_max"])     # compression bound (lower stress)
+        sigma_min = float(r0["param.sigma_min"])     # extension bound (upper stress)
 
-        # eps state should start at the seed's *true* eps_total (for alignment/physics consistency)
-        eps_state = r0["eps_total"]
+        # strain state starts at seed's *true* ε_total for alignment
+        eps_state = float(r0["eps_total"])
 
-        # --- NEW: write the seed σ₀ into the recursive dataset at seed_step ---
-        # Prefer predicted σ₀ if present; fall back to true σ₀ otherwise.
-        sigma_seed = r0.get("pred_sigma_0", None)
-        if sigma_seed is None:
-            sigma_seed = r0.get("sigma_0", None)
-
+        # write the seed row (no model call at the seed)
         jrow0 = index_out.get((rid, seed_step))
-        if jrow0 is not None and sigma_seed is not None:
-            # Store the seed state as the first recursive entry (no model step yet)
-            out_rows[jrow0]["sigma_0_rec"] = float(sigma_seed)
-            out_rows[jrow0]["e_s_rec"] = None  # No Es prediction at the seed
+        if jrow0 is not None:
+            out_rows[jrow0]["sigma_0_rec"] = float(sigma_cur)
+            out_rows[jrow0]["e_s_rec"] = None
             out_rows[jrow0]["eps_total_rec"] = float(eps_state)
 
-        # From here on we advance recursively from the seed state
+        # advance recursively from the seed
         max_step = steps[-1][0]
         j = 1
         while True:
@@ -388,61 +364,58 @@ def propagate_recursive_from_first_test(
             if abs_step > max_step:
                 break
 
-            # (A) Oedometer one step from current state
+            # (A) physical step attempt from current state
             sigma_phys_next, eps_total_next = oedo_one_step(
-                e0, c_c, c_s, float(sigma_cur), sigma_max, sigma_min, eps_delta, float(eps_state)
+                e0, c_c, c_s, float(sigma_cur), sigma_max, sigma_min, float(eps_delta), float(eps_state)
             )
 
-            # --- Direction control + duplication at bounds (one-sided) ---
-
-            # CASE 1: Compressing and dipped below compression bound -> create a turning point.
-            # We want to: (i) duplicate the *last valid* row into the current abs_step,
-            # (ii) flip eps_delta to extension, (iii) recompute the physical step for the *next* row.
+            # (B) compression bound reached -> INSERT a TURNING-POINT PREDICTION ROW
             if eps_delta < 0 and sigma_phys_next <= sigma_max:
-                # Duplicate previous step (abs_step-1) into the current row (abs_step)
-                _copy_prev_into_current_row(rid, abs_step - 1, abs_step)
+                # model input uses SAME σ0 (sigma_cur) but flipped Δε
+                tp_eps_delta = abs(eps_delta)   # extension
+                tp_sgn = 1.0                    # inversion sign for extension
+                es_tp = model_predict_es(float(sigma_cur), float(tp_eps_delta))
+                sigma_ml_tp = invert_es_to_sigma(float(es_tp), e0, c_s, c_c, float(tp_sgn))
 
-                # Move to the next table row (so we now write the *first* extension point there)
+                # record turning-point row at current abs_step (no physical advance)
+                jrow_tp = index_out.get((rid, abs_step))
+                if jrow_tp is not None:
+                    out_rows[jrow_tp]["sigma_0_rec"] = float(sigma_ml_tp)
+                    out_rows[jrow_tp]["e_s_rec"] = float(es_tp)
+                    out_rows[jrow_tp]["eps_total_rec"] = float(eps_state)  # unchanged strain at turning point
+
+                # feedback: update state (σ changes due to ML inversion; ε stays)
+                sigma_cur = float(sigma_ml_tp)
+                # flip direction for subsequent steps
+                eps_delta = float(tp_eps_delta)
+
+                # advance to next row index and continue loop
                 j += 1
-                abs_step = seed_step + j
+                continue  # next iteration will recompute physical step from updated state
 
-                # Flip direction to extension and recompute from the *same* state
-                eps_delta = abs(eps_delta)  # switch to extension
-                sgn = 1  # keep invert_es_to_sigma consistent with the new direction
-                sigma_phys_next, eps_total_next = oedo_one_step(
-                    e0, c_c, c_s, float(sigma_cur), sigma_max, sigma_min, eps_delta, float(eps_state)
-                )
-
-            # CASE 2: Extending and exceeded extension bound -> write the last valid entry once more and stop.
-            # No flip back to compression (prevents ping-pong). Ensures the end-of-extension is recorded.
+            # (C) extension bound exceeded -> stop (no extra row)
             if eps_delta > 0 and sigma_phys_next >= sigma_min:
-                _copy_prev_into_current_row(rid, abs_step - 1, abs_step)
                 break
 
-            # --- END Direction control + duplication ---
-
-            # (B) Model predicts Es at the *physical* next stress
+            # (D) normal step: predict at physical next stress, then invert and record
+            sgn = 1.0 if eps_delta > 0 else -1.0
             es_hat = model_predict_es(float(sigma_phys_next), float(eps_delta))
+            sigma_ml_next = invert_es_to_sigma(float(es_hat), e0, c_s, c_c, float(sgn))
 
-            # (C) Invert Es -> ML-next σ0 and record row
-            sigma_ml_next = invert_es_to_sigma(es_hat, e0, c_s, c_c, sgn)
-
-            key = (rid, abs_step)
-            jrow = index_out.get(key, None)
+            jrow = index_out.get((rid, abs_step))
             if jrow is not None:
-                out_rows[jrow]["sigma_0_rec"] = sigma_ml_next
-                out_rows[jrow]["e_s_rec"] = es_hat
-                out_rows[jrow]["eps_total_rec"] = eps_total_next
+                out_rows[jrow]["sigma_0_rec"] = float(sigma_ml_next)
+                out_rows[jrow]["e_s_rec"] = float(es_hat)
+                out_rows[jrow]["eps_total_rec"] = float(eps_total_next)
 
-            # (D) feedback for next iteration
-            sigma_cur = sigma_ml_next
-            eps_state = eps_total_next
+            # feedback for next iteration
+            sigma_cur = float(sigma_ml_next)
+            eps_state = float(eps_total_next)
             j += 1
 
     df_out = pd.DataFrame(out_rows)
     df_out.to_csv(root_dir + out_path, index=False)
     return df_out
-
 
 # ---------------------------------------------------------------------
 # 4) Orchestrator (optional): run any combination of the three stages

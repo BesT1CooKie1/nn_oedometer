@@ -38,10 +38,7 @@ class PiecewiseFromRaw(nn.Module):
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
-        sigma0 = X[:, 0:1]
-        de     = X[:, 1:2]
-        Z = torch.cat([sigma0, de], dim=1)   # [B, 3]
-        return self.mlp(Z)
+        return self.mlp(X)
 
 MODEL_REGISTRY = {
     "piecewise_relu":  lambda **kw: PiecewiseFromRaw(activation="relu", **kw),
