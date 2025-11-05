@@ -44,7 +44,6 @@ class Oedometer:
         eps_0=0,
         max_iter=1_000_000_000,
     ):
-
         # fixe Parameter
         self.e0 = e0
         self.c_c = c_c
@@ -55,6 +54,7 @@ class Oedometer:
         self.eps_delta = eps_delta
         self.eps_0_init = eps_0
         self.max_iter = max_iter
+
 
         # abgeleitete Koeffizienten
         self.c1 = - (1 + self.e0) / 2 * (self.c_c + self.c_s) / (self.c_s * self.c_c)
